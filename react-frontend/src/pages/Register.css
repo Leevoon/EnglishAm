@@ -1,0 +1,156 @@
+/* ========================================
+   Register Page Styles
+   ======================================== */
+
+.page-register {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-primary-bg) 100%);
+  padding: var(--spacing-8) 0;
+}
+
+.register-wrapper {
+  width: 100%;
+  max-width: 550px;
+  margin: 0 auto;
+}
+
+.register-content {
+  background-color: var(--color-white);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-xl);
+  padding: var(--spacing-10);
+}
+
+/* Logo */
+.register-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  font-family: var(--font-family-heading);
+  margin-bottom: var(--spacing-6);
+}
+
+.register-logo .logo-text {
+  color: var(--color-text-primary);
+}
+
+.register-logo .logo-dot,
+.register-logo .logo-domain {
+  color: var(--color-primary);
+}
+
+/* Title */
+.register-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+  margin: 0 0 var(--spacing-2);
+}
+
+.register-subtitle {
+  text-align: center;
+  color: var(--color-text-muted);
+  margin: 0 0 var(--spacing-6);
+}
+
+/* Form */
+.register-form {
+  
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-4);
+}
+
+.required {
+  color: var(--color-error);
+}
+
+/* Gender Options */
+.gender-options {
+  display: flex;
+  gap: var(--spacing-6);
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.radio-label input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+}
+
+/* Checkbox */
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--color-primary);
+}
+
+.checkbox-label a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.checkbox-label a:hover {
+  text-decoration: underline;
+}
+
+/* Footer */
+.register-footer {
+  text-align: center;
+  margin-top: var(--spacing-6);
+  padding-top: var(--spacing-6);
+  border-top: 1px solid var(--color-gray-200);
+}
+
+.register-footer p {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.register-footer a {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+}
+
+.register-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 575px) {
+  .register-content {
+    padding: var(--spacing-6);
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}

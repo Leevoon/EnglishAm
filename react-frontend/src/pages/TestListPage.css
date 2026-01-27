@@ -1,0 +1,126 @@
+/* ========================================
+   Test List Page Styles
+   ======================================== */
+
+.test-list-page .page-header {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  color: var(--color-white);
+  padding: var(--spacing-16) 0;
+}
+
+.test-list-page .page-title {
+  color: var(--color-white);
+}
+
+.test-list-page .page-subtitle {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Filters */
+.test-filters {
+  display: flex;
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-8);
+  padding: var(--spacing-4);
+  background-color: var(--color-gray-50);
+  border-radius: var(--radius-lg);
+}
+
+.filter-group {
+  flex: 1;
+  max-width: 250px;
+}
+
+.filter-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-2);
+}
+
+/* Tests Grid */
+.tests-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-6);
+}
+
+/* Test Card */
+.test-card {
+  display: flex;
+  flex-direction: column;
+  transition: all var(--transition-normal);
+}
+
+.test-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.test-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-3) var(--spacing-4);
+  background-color: var(--color-gray-50);
+  border-bottom: 1px solid var(--color-gray-100);
+}
+
+.test-date {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.test-card-body {
+  padding: var(--spacing-4);
+  flex: 1;
+}
+
+.test-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin: 0 0 var(--spacing-2);
+}
+
+.test-category {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.test-card-footer {
+  padding: var(--spacing-4);
+  border-top: 1px solid var(--color-gray-100);
+}
+
+/* Responsive */
+@media (max-width: 1199px) {
+  .tests-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 991px) {
+  .tests-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 575px) {
+  .test-list-page .page-header {
+    padding: var(--spacing-10) 0;
+  }
+  
+  .test-filters {
+    flex-direction: column;
+  }
+  
+  .filter-group {
+    max-width: none;
+  }
+  
+  .tests-grid {
+    grid-template-columns: 1fr;
+  }
+}

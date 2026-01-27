@@ -1,0 +1,97 @@
+/* ========================================
+   Login Page Styles
+   ======================================== */
+
+.page-login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-primary-bg) 100%);
+  padding: var(--spacing-8) 0;
+}
+
+.login-wrapper {
+  width: 100%;
+  max-width: 450px;
+  margin: 0 auto;
+}
+
+.login-content {
+  background-color: var(--color-white);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-xl);
+  padding: var(--spacing-10);
+}
+
+/* Logo */
+.login-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  font-family: var(--font-family-heading);
+  margin-bottom: var(--spacing-8);
+}
+
+.login-logo h2 {
+  margin: 0;
+  color: var(--color-primary);
+}
+
+/* Title */
+.login-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  text-align: center;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-6);
+}
+
+/* Form */
+.login-form {
+  
+}
+
+.required {
+  color: var(--color-error);
+}
+
+/* Actions */
+.login-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--spacing-4);
+}
+
+.forgot-password-link {
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.forgot-password-link:hover {
+  text-decoration: underline;
+}
+
+/* Buttons */
+.btn-login {
+  width: 100%;
+  padding: var(--spacing-3) var(--spacing-6);
+  font-size: var(--font-size-base);
+}
+
+.mt-3 {
+  margin-top: var(--spacing-3);
+}
+
+/* Responsive */
+@media (max-width: 575px) {
+  .login-content {
+    padding: var(--spacing-6);
+  }
+}
+
+

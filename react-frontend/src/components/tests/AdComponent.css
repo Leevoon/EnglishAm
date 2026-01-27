@@ -1,0 +1,59 @@
+.ad-component {
+  width: 100%;
+  min-height: 300px;
+  margin-bottom: 20px;
+}
+
+.ad-wrapper {
+  width: 100%;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 5px;
+  padding: 10px;
+  overflow: hidden;
+}
+
+.ad-placeholder {
+  padding: 40px;
+  text-align: center;
+  color: #999;
+  background-color: #f8f9fa;
+  border: 2px dashed #dee2e6;
+  border-radius: 5px;
+}
+
+.ad-video {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  border-radius: 5px;
+}
+
+.ad-image {
+  width: 100%;
+  height: auto;
+  border-radius: 5px;
+  object-fit: contain;
+}
+
+.ad-text {
+  padding: 20px;
+  color: #333;
+  line-height: 1.6;
+}
+
+.ad-text p {
+  margin-bottom: 10px;
+}
+
+.ad-text a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.ad-text a:hover {
+  text-decoration: underline;
+}
+
+
+

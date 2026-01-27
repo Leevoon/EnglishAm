@@ -1,0 +1,59 @@
+.variant-selector {
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+}
+
+.variant-selector h4 {
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.variant-buttons {
+  display: flex;
+  gap: 15px;
+}
+
+.variant-btn {
+  flex: 1;
+  padding: 15px;
+  border: 2px solid #dee2e6;
+  background-color: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.variant-btn:hover {
+  border-color: #007bff;
+  background-color: #f0f7ff;
+}
+
+.variant-btn.active {
+  border-color: #007bff;
+  background-color: #007bff;
+  color: #fff;
+}
+
+.variant-btn .flag {
+  font-size: 40px;
+}
+
+.variant-btn .label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .variant-buttons {
+    flex-direction: column;
+  }
+}
+
+
+

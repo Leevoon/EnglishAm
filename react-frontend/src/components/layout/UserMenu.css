@@ -1,0 +1,215 @@
+/* ========================================
+   User Menu Styles
+   ======================================== */
+
+.user-menu {
+  position: relative;
+}
+
+.user-menu-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-1) var(--spacing-2);
+  background: none;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.user-menu-toggle:hover {
+  border-color: var(--color-gray-400);
+  background-color: var(--color-gray-50);
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-initials {
+  color: var(--color-white);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.user-name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-arrow {
+  transition: transform var(--transition-fast);
+  opacity: 0.6;
+}
+
+.user-menu.open .user-arrow {
+  transform: rotate(180deg);
+}
+
+/* ===== Dropdown ===== */
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 280px;
+  background-color: var(--color-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  margin-top: var(--spacing-2);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all var(--transition-fast);
+  z-index: var(--z-dropdown);
+  overflow: hidden;
+}
+
+.user-menu.open .user-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* ===== Header ===== */
+.user-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+  background-color: var(--color-gray-50);
+}
+
+.user-avatar-lg {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.user-avatar-lg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-avatar-lg .avatar-initials {
+  font-size: var(--font-size-lg);
+}
+
+.user-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.user-fullname {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-email {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== Divider ===== */
+.user-dropdown-divider {
+  height: 1px;
+  background-color: var(--color-gray-200);
+}
+
+/* ===== Menu ===== */
+.user-dropdown-menu {
+  list-style: none;
+  padding: var(--spacing-2) 0;
+  margin: 0;
+}
+
+.user-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-2) var(--spacing-4);
+  color: var(--color-text-primary);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.user-dropdown-item:hover {
+  background-color: var(--color-primary-bg);
+  color: var(--color-primary);
+}
+
+.item-icon {
+  font-size: var(--font-size-base);
+  width: 24px;
+  text-align: center;
+}
+
+.item-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+/* ===== Logout ===== */
+.user-dropdown-logout {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  width: 100%;
+  padding: var(--spacing-3) var(--spacing-4);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-error);
+  transition: all var(--transition-fast);
+}
+
+.user-dropdown-logout:hover {
+  background-color: var(--color-error-bg);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 767px) {
+  .user-name {
+    display: none;
+  }
+  
+  .user-menu-toggle {
+    padding: var(--spacing-1);
+  }
+  
+  .user-dropdown {
+    right: -10px;
+    width: 260px;
+  }
+}

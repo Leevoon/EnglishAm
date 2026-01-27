@@ -1,0 +1,20 @@
+.test-page {
+  padding: 40px 0;
+  min-height: calc(100vh - 300px);
+}
+
+.test-page h1 {
+  margin-bottom: 30px;
+  color: #333;
+}
+
+.loading,
+.no-test {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 18px;
+}
+
+
+

@@ -1,0 +1,42 @@
+.level-selector {
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+}
+
+.level-selector h4 {
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.level-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.level-btn {
+  padding: 10px 20px;
+  border: 2px solid #dee2e6;
+  background-color: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.level-btn:hover {
+  border-color: #007bff;
+  background-color: #f0f7ff;
+}
+
+.level-btn.active {
+  border-color: #007bff;
+  background-color: #007bff;
+  color: #fff;
+}
+
+
+
