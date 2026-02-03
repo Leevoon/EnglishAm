@@ -17,10 +17,10 @@ const Footer = () => {
   };
 
   const quickLinks = [
-    { label: 'home', path: '/' },
-    { label: 'about us', path: '/about' },
-    { label: 'news', path: '/news' },
-    { label: 'contact us', path: '/contact' }
+    { label: 'Home', path: '/' },
+    { label: 'About Us', path: '/about' },
+    { label: 'News', path: '/news' },
+    { label: 'Contact Us', path: '/contact' }
   ];
 
   const resourceLinks = [
@@ -104,7 +104,7 @@ const Footer = () => {
 
             {/* Contact & Mailing */}
             <div className="footer-contact">
-              <h4 className="footer-title">contacts</h4>
+              <h4 className="footer-title">Contacts</h4>
               <ul className="contact-list">
                 <li>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

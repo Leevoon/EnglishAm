@@ -19,7 +19,10 @@ npm install
 Create a `.env` file in the `node-backend` directory with the following content:
 
 ```env
-# Database Configuration
+# Enable mock data mode (set to false to use database)
+USE_MOCK=true
+
+# Database Configuration (only used when USE_MOCK=false)
 DB_HOST=localhost
 DB_NAME=english_18_01_19
 DB_USER=root
@@ -35,6 +38,34 @@ JWT_SECRET=your-secret-key-change-this-in-production
 ```
 
 **Note:** Adjust the database credentials if your MySQL setup is different.
+
+## Mock Data Mode
+
+The backend supports a mock data mode for development and testing without a database.
+
+### Enabling Mock Mode
+
+Set `USE_MOCK=true` in your `.env` file to use mock data instead of the database.
+
+```env
+USE_MOCK=true
+```
+
+### Mock Mode Features
+
+- No MySQL database required
+- Pre-populated test data for all endpoints
+- Test login credentials: `test@example.com` / `password`
+- Includes mock data for:
+  - Categories and test categories
+  - Tests with questions and answers
+  - Slideshows, news, memberships
+  - Testimonials, gallery
+  - Static page content
+
+### Switching to Database Mode
+
+To use a real database, set `USE_MOCK=false` in your `.env` file and ensure your database is properly configured.
 
 ### 3. Run the Backend
 

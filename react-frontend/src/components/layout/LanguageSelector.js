@@ -5,7 +5,7 @@ import './LanguageSelector.css';
 const languages = [
   { id: 1, code: 'en', name: 'English', flag: '🇬🇧' },
   { id: 2, code: 'ru', name: 'Русский', flag: '🇷🇺' },
-  { id: 3, code: 'hy', name: 'Հայերdelays', flag: '🇦🇲' },
+  { id: 3, code: 'hy', name: 'Հայերեն', flag: '🇦🇲' },
   { id: 4, code: 'zh', name: '中文', flag: '🇨🇳' },
   { id: 5, code: 'de', name: 'Deutsch', flag: '🇩🇪' },
   { id: 6, code: 'ar', name: 'العربية', flag: '🇸🇦' }

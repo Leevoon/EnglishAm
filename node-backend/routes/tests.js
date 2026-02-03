@@ -98,6 +98,19 @@ router.get('/', async (req, res) => {
     const languageId = req.query.languageId || DEFAULT_LANGUAGE_ID;
     const { Op } = require('sequelize');
 
+    // Return empty results if no categoryId provided
+    if (!categoryId) {
+      return res.json({
+        tests: [],
+        pagination: {
+          total: 0,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          totalPages: 0
+        }
+      });
+    }
+
     const whereClause = {
       status: 1,
       category_id: categoryId

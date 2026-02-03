@@ -13,41 +13,36 @@ const Navigation = () => {
     setActiveDropdown(null);
   };
 
-  // Navigation menu structure matching english.am
+  // Navigation menu structure
   const menuItems = [
-    {
-      label: 'about us',
-      path: '/about',
-      type: 'link'
-    },
     {
       label: 'TESTS',
       type: 'dropdown',
       children: [
-        { label: 'AUDIO TESTS', path: '/tests/audio' },
-        { label: 'SYNONYMS', path: '/tests/synonyms' },
-        { label: 'ANTONYMS', path: '/tests/antonyms' },
-        { label: 'GENERAL ENGLISH', path: '/tests/general-english' },
-        { label: 'PROFESSIONAL ENGLISH', path: '/tests/professional-english' },
-        { label: 'PHOTO TESTS', path: '/tests/photo' }
+        { label: 'Audio Tests', path: '/tests/audio' },
+        { label: 'Synonyms', path: '/tests/synonyms' },
+        { label: 'Antonyms', path: '/tests/antonyms' },
+        { label: 'General English', path: '/tests/general-english' },
+        { label: 'Professional English', path: '/tests/professional-english' },
+        { label: 'Photo Tests', path: '/tests/photo' }
       ]
     },
     {
       label: 'TOEFL iBT',
       type: 'dropdown',
       children: [
-        { label: 'READING', path: '/toefl/reading' },
-        { label: 'LISTENING', path: '/toefl/listening' },
-        { label: 'SPEAKING', path: '/toefl/speaking' },
-        { 
-          label: 'WRITING',
+        { label: 'Reading', path: '/toefl/reading' },
+        { label: 'Listening', path: '/toefl/listening' },
+        { label: 'Speaking', path: '/toefl/speaking' },
+        {
+          label: 'Writing',
           type: 'submenu',
           children: [
-            { label: 'integrated writing', path: '/toefl/writing/integrated' },
-            { label: 'independent writing', path: '/toefl/writing/independent' }
+            { label: 'Integrated Writing', path: '/toefl/writing/integrated' },
+            { label: 'Independent Writing', path: '/toefl/writing/independent' }
           ]
         },
-        { label: 'COMPLETE TEST', path: '/toefl/complete' }
+        { label: 'Complete Test', path: '/toefl/complete' }
       ]
     },
     {
@@ -55,25 +50,25 @@ const Navigation = () => {
       type: 'dropdown',
       children: [
         {
-          label: 'IELTS General Training Test',
+          label: 'General Training',
           type: 'submenu',
           children: [
-            { label: 'READING', path: '/ielts/general/reading' },
-            { label: 'LISTENING', path: '/ielts/general/listening' },
-            { label: 'SPEAKING', path: '/ielts/general/speaking' },
-            { label: 'WRITING', path: '/ielts/general/writing' },
-            { label: 'COMPLETE TEST', path: '/ielts/general/complete' }
+            { label: 'Reading', path: '/ielts/general/reading' },
+            { label: 'Listening', path: '/ielts/general/listening' },
+            { label: 'Speaking', path: '/ielts/general/speaking' },
+            { label: 'Writing', path: '/ielts/general/writing' },
+            { label: 'Complete Test', path: '/ielts/general/complete' }
           ]
         },
         {
-          label: 'IELTS Academic Test',
+          label: 'Academic',
           type: 'submenu',
           children: [
-            { label: 'READING', path: '/ielts/academic/reading' },
-            { label: 'LISTENING', path: '/ielts/academic/listening' },
-            { label: 'SPEAKING', path: '/ielts/academic/speaking' },
-            { label: 'WRITING', path: '/ielts/academic/writing' },
-            { label: 'COMPLETE TEST', path: '/ielts/academic/complete' }
+            { label: 'Reading', path: '/ielts/academic/reading' },
+            { label: 'Listening', path: '/ielts/academic/listening' },
+            { label: 'Speaking', path: '/ielts/academic/speaking' },
+            { label: 'Writing', path: '/ielts/academic/writing' },
+            { label: 'Complete Test', path: '/ielts/academic/complete' }
           ]
         }
       ]
@@ -89,13 +84,8 @@ const Navigation = () => {
       ]
     },
     {
-      label: 'lessons',
+      label: 'Lessons',
       path: '/lessons',
-      type: 'link'
-    },
-    {
-      label: 'contact us',
-      path: '/contact',
       type: 'link'
     }
   ];

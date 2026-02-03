@@ -66,10 +66,12 @@ const LessonsPage = () => {
             {filteredLessons.map((lesson) => (
               <div key={lesson.id} className="lesson-card card">
                 <div className="lesson-card-image">
-                  <img 
+                  <img
                     src={`/vendor/img/lessons/${lesson.image}`}
-                    alt={lesson.title}
-                    onError={(e) => { e.target.src = '/vendor/img/lessons/default.jpg'; }}
+                    alt=""
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
                   />
                   <span className={`lesson-level badge ${getLevelBadgeClass(lesson.level)}`}>
                     {lesson.level}

@@ -18,25 +18,24 @@ const MobileMenu = ({ isOpen, onClose, isAuthenticated, user, onLogout }) => {
   const languages = [
     { id: 1, code: 'en', name: 'English', flag: '🇬🇧' },
     { id: 2, code: 'ru', name: 'Русский', flag: '🇷🇺' },
-    { id: 3, code: 'hy', name: 'Հայdelays', flag: '🇦🇲' },
+    { id: 3, code: 'hy', name: 'Հայերեն', flag: '🇦🇲' },
     { id: 4, code: 'zh', name: '中文', flag: '🇨🇳' },
     { id: 5, code: 'de', name: 'Deutsch', flag: '🇩🇪' },
     { id: 6, code: 'ar', name: 'العربية', flag: '🇸🇦' }
   ];
 
   const menuItems = [
-    { label: 'about us', path: '/about', type: 'link' },
     {
       label: 'TESTS',
       key: 'tests',
       type: 'accordion',
       children: [
-        { label: 'AUDIO TESTS', path: '/tests/audio' },
-        { label: 'SYNONYMS', path: '/tests/synonyms' },
-        { label: 'ANTONYMS', path: '/tests/antonyms' },
-        { label: 'GENERAL ENGLISH', path: '/tests/general-english' },
-        { label: 'PROFESSIONAL ENGLISH', path: '/tests/professional-english' },
-        { label: 'PHOTO TESTS', path: '/tests/photo' }
+        { label: 'Audio Tests', path: '/tests/audio' },
+        { label: 'Synonyms', path: '/tests/synonyms' },
+        { label: 'Antonyms', path: '/tests/antonyms' },
+        { label: 'General English', path: '/tests/general-english' },
+        { label: 'Professional English', path: '/tests/professional-english' },
+        { label: 'Photo Tests', path: '/tests/photo' }
       ]
     },
     {
@@ -44,12 +43,12 @@ const MobileMenu = ({ isOpen, onClose, isAuthenticated, user, onLogout }) => {
       key: 'toefl',
       type: 'accordion',
       children: [
-        { label: 'READING', path: '/toefl/reading' },
-        { label: 'LISTENING', path: '/toefl/listening' },
-        { label: 'SPEAKING', path: '/toefl/speaking' },
-        { label: 'WRITING - Integrated', path: '/toefl/writing/integrated' },
-        { label: 'WRITING - Independent', path: '/toefl/writing/independent' },
-        { label: 'COMPLETE TEST', path: '/toefl/complete' }
+        { label: 'Reading', path: '/toefl/reading' },
+        { label: 'Listening', path: '/toefl/listening' },
+        { label: 'Speaking', path: '/toefl/speaking' },
+        { label: 'Writing - Integrated', path: '/toefl/writing/integrated' },
+        { label: 'Writing - Independent', path: '/toefl/writing/independent' },
+        { label: 'Complete Test', path: '/toefl/complete' }
       ]
     },
     {
@@ -80,8 +79,7 @@ const MobileMenu = ({ isOpen, onClose, isAuthenticated, user, onLogout }) => {
         { label: 'Writing Skills', path: '/training/writing' }
       ]
     },
-    { label: 'lessons', path: '/lessons', type: 'link' },
-    { label: 'contact us', path: '/contact', type: 'link' }
+    { label: 'Lessons', path: '/lessons', type: 'link' }
   ];
 
   const accountMenuItems = [

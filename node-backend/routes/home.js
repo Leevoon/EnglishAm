@@ -25,6 +25,7 @@ router.get('/slideshow', async (req, res) => {
       where: { status: 1 },
       include: [{
         model: SlideshowLabel,
+        as: 'slideshowLabels',
         where: { language_id: languageId },
         required: false,
         attributes: ['value']
@@ -86,6 +87,7 @@ router.get('/memberships', async (req, res) => {
       where: { status: 1 },
       include: [{
         model: MembershipLabel,
+        as: 'membershipLabels',
         where: { language_id: languageId },
         required: false,
         attributes: ['title', 'value']
@@ -109,6 +111,7 @@ router.get('/testimonials', async (req, res) => {
       where: { status: 1 },
       include: [{
         model: User,
+        as: 'user',
         attributes: ['id', 'first_name', 'last_name', 'avatar'],
         where: { block: 0 },
         required: true
@@ -134,6 +137,7 @@ router.get('/news', async (req, res) => {
       where: { status: 1 },
       include: [{
         model: NewsLabel,
+        as: 'newsLabels',
         where: { language_id: languageId },
         required: false,
         attributes: ['title', 'value']
