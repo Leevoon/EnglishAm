@@ -25,10 +25,6 @@ const Slideshow = sequelize.define('Slideshow', {
   image: {
     type: DataTypes.STRING(255),
     allowNull: false
-  },
-  href: {
-    type: DataTypes.STRING(255),
-    allowNull: true
   }
 }, {
   tableName: 'slideshow',

@@ -15,7 +15,7 @@ const TestLevelLabel = sequelize.define('TestLevelLabel', {
     type: DataTypes.INTEGER.UNSIGNED,
     allowNull: false
   },
-  value: {
+  name: {
     type: DataTypes.STRING(255),
     allowNull: true
   },

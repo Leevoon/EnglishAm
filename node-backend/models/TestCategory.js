@@ -48,11 +48,6 @@ const TestCategory = sequelize.define('TestCategory', {
   level_id: {
     type: DataTypes.INTEGER.UNSIGNED,
     allowNull: true
-  },
-  english_variant: {
-    type: DataTypes.ENUM('american', 'british', 'both'),
-    allowNull: true,
-    defaultValue: 'both'
   }
 }, {
   tableName: 'test_category',

@@ -11,8 +11,8 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Serve static files (audio, images, videos)
-app.use('/vendor', express.static(path.join(__dirname, '../vendor')));
+// Serve static files (audio, images, videos) from the legacy project vendor folder
+app.use('/vendor', express.static(path.join(__dirname, '../../html/vendor')));
 
 // Check if using mock data (set USE_MOCK=true in .env or environment)
 const useMock = process.env.USE_MOCK === 'true';

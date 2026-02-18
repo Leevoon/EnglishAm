@@ -23,6 +23,12 @@ const AudioTest = ({ test, onAnswerChange, selectedAnswer }) => {
     setIsPlaying(false);
   };
 
+  // Check if there's an image (not audio file)
+  const hasImage = test.image && 
+    !test.image.endsWith('.mp3') && 
+    !test.image.endsWith('.wav') &&
+    !test.image.endsWith('.ogg');
+
   return (
     <div className="audio-test">
       {audioUrl && (
@@ -35,6 +41,16 @@ const AudioTest = ({ test, onAnswerChange, selectedAnswer }) => {
             onPlay={handlePlay}
             onEnded={handleEnded}
             className="audio-player"
+          />
+        </div>
+      )}
+
+      {hasImage && (
+        <div className="test-image">
+          <img 
+            src={`/vendor/img/tests/${test.image}`} 
+            alt="Question illustration" 
+            onError={(e) => { e.target.style.display = 'none'; }}
           />
         </div>
       )}

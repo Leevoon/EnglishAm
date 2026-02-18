@@ -81,14 +81,14 @@ const TestListPage = () => {
 
   const getCategoryId = (cat) => {
     const categoryIds = {
-      'audio': 1,
-      'synonyms': 2,
-      'antonyms': 3,
-      'general-english': 4,
-      'professional-english': 5,
-      'photo': 6
+      'audio': 15,
+      'synonyms': 19,
+      'antonyms': 23,
+      'general-english': 2,
+      'professional-english': 3,
+      'photo': 4
     };
-    return categoryIds[cat] || 1;
+    return categoryIds[cat] || 2;
   };
 
   const generateFallbackTests = () => {

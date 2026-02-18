@@ -63,9 +63,14 @@ const Header = () => {
               {isAuthenticated ? (
                 <UserMenu user={user} onLogout={handleLogout} />
               ) : (
-                <Link to="/login" className="btn btn-primary btn-login">
-                  login
-                </Link>
+                <div className="header-auth-buttons">
+                  <Link to="/login" className="btn btn-outline btn-login">
+                    login
+                  </Link>
+                  <Link to="/register" className="btn btn-primary btn-register">
+                    register
+                  </Link>
+                </div>
               )}
 
               {/* Mobile Menu Toggle */}

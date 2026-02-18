@@ -48,8 +48,7 @@ router.get('/about', async (req, res) => {
       SELECT sp.*, spl.title, spl.value 
       FROM static_pages sp
       LEFT JOIN static_pages_label spl ON sp.id = spl.static_pages_id AND spl.language_id = ${languageId}
-      WHERE sp.page_key = 'about_us' AND sp.status = 1
-      ORDER BY sp.sort_order ASC
+      WHERE sp.page_key = 'about_us'
       LIMIT 1
     `);
     res.json(results[0] || null);
@@ -67,8 +66,7 @@ router.get('/why-choose', async (req, res) => {
       SELECT sp.*, spl.title, spl.value 
       FROM static_pages sp
       LEFT JOIN static_pages_label spl ON sp.id = spl.static_pages_id AND spl.language_id = ${languageId}
-      WHERE sp.page_key = 'why' AND sp.status = 1
-      ORDER BY sp.sort_order ASC
+      WHERE sp.page_key = 'why'
       LIMIT 1
     `);
     res.json(results[0] || null);
@@ -90,7 +88,7 @@ router.get('/memberships', async (req, res) => {
         as: 'membershipLabels',
         where: { language_id: languageId },
         required: false,
-        attributes: ['title', 'value']
+        attributes: ['title', 'short_description', 'description']
       }],
       order: [['sort_ortder', 'ASC']]
     });

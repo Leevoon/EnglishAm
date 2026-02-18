@@ -19,7 +19,11 @@ const MembershipLabel = sequelize.define('MembershipLabel', {
     type: DataTypes.STRING(255),
     allowNull: true
   },
-  value: {
+  short_description: {
+    type: DataTypes.STRING(255),
+    allowNull: true
+  },
+  description: {
     type: DataTypes.TEXT,
     allowNull: true
   }

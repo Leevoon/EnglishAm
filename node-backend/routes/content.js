@@ -10,11 +10,10 @@ router.get('/about', async (req, res) => {
     const languageId = req.query.languageId || DEFAULT_LANGUAGE_ID;
     
     const [results] = await sequelize.query(`
-      SELECT sp.*, spl.title, spl.value 
+      SELECT sp.id, sp.page_key, sp.created_date, spl.title, spl.value 
       FROM static_pages sp
       LEFT JOIN static_pages_label spl ON sp.id = spl.static_pages_id AND spl.language_id = ${languageId}
-      WHERE sp.page_key = 'about_us' AND sp.status = 1
-      ORDER BY sp.sort_order ASC
+      WHERE sp.page_key = 'about_us'
     `);
 
     res.json(results);

@@ -42,7 +42,9 @@ export const testsAPI = {
     return api.get(`/tests?${queryString}`);
   },
   getTest: (testId, languageId = 1) => api.get(`/tests/${testId}?languageId=${languageId}`),
-  submitTest: (testId, answers) => api.post(`/tests/${testId}/submit`, { answers })
+  submitTest: (testId, answers, userId, duration) => api.post(`/tests/${testId}/submit`, { answers, userId, duration }),
+  getHistory: (userId, languageId = 1) => api.get(`/tests/history/${userId}?languageId=${languageId}`),
+  getStatistics: (userId) => api.get(`/tests/statistics/${userId}`)
 };
 
 // TOEFL API

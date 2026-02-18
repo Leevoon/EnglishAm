@@ -18,6 +18,7 @@ import LessonsPage from './pages/LessonsPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import NotFound from './pages/NotFound';
+import AccountPage from './pages/AccountPage';
 
 // Test Pages
 import TestListPage from './pages/TestListPage';
@@ -60,6 +61,38 @@ function App() {
                 {/* ========== AUTH PAGES ========== */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+
+                {/* ========== ACCOUNT PAGES ========== */}
+                <Route path="/account" element={
+                  <ProtectedRoute>
+                    <AccountPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/account/profile" element={
+                  <ProtectedRoute>
+                    <AccountPage section="profile" />
+                  </ProtectedRoute>
+                } />
+                <Route path="/account/results" element={
+                  <ProtectedRoute>
+                    <AccountPage section="results" />
+                  </ProtectedRoute>
+                } />
+                <Route path="/account/statistics" element={
+                  <ProtectedRoute>
+                    <AccountPage section="statistics" />
+                  </ProtectedRoute>
+                } />
+                <Route path="/account/subscription" element={
+                  <ProtectedRoute>
+                    <AccountPage section="subscription" />
+                  </ProtectedRoute>
+                } />
+                <Route path="/account/change-password" element={
+                  <ProtectedRoute>
+                    <AccountPage section="change-password" />
+                  </ProtectedRoute>
+                } />
 
                 {/* ========== TESTS ========== */}
                 <Route path="/tests/:category" element={<TestListPage />} />

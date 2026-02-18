@@ -211,7 +211,8 @@ router.get('/:testId', async (req, res) => {
 router.post('/:testId/submit', async (req, res) => {
   try {
     const { testId } = req.params;
-    const { answers } = req.body; // Array of { test_id, answer_id }
+    const { answers, userId, duration } = req.body; // Array of { test_id, answer_id }
+    const sequelize = require('../config/database');
 
     // Calculate score
     let correctCount = 0;
@@ -231,7 +232,29 @@ router.post('/:testId/submit', async (req, res) => {
     }
 
     const totalQuestions = answers.length;
-    const score = (correctCount / totalQuestions) * 100;
+    const score = Math.round((correctCount / totalQuestions) * 100);
+
+    // Save to user_history if userId provided
+    if (userId) {
+      try {
+        await sequelize.query(`
+          INSERT INTO user_history (user_id, test_id, duration, score, score_from, answers, created_date)
+          VALUES (:userId, :testId, :duration, :score, :scoreFrom, :answers, NOW())
+        `, {
+          replacements: {
+            userId: userId,
+            testId: testId,
+            duration: duration || '00:00',
+            score: correctCount,
+            scoreFrom: totalQuestions,
+            answers: JSON.stringify(results)
+          }
+        });
+      } catch (saveError) {
+        console.error('Error saving to user_history:', saveError);
+        // Don't fail the whole request if saving fails
+      }
+    }
 
     res.json({
       score: score.toFixed(2),
@@ -242,6 +265,68 @@ router.post('/:testId/submit', async (req, res) => {
   } catch (error) {
     console.error('Error submitting test:', error);
     res.status(500).json({ error: 'Failed to submit test' });
+  }
+});
+
+// Get user's test history
+router.get('/history/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const languageId = req.query.languageId || DEFAULT_LANGUAGE_ID;
+    const sequelize = require('../config/database');
+
+    const [results] = await sequelize.query(`
+      SELECT 
+        uh.id,
+        uh.test_id,
+        uh.created_date,
+        uh.duration,
+        uh.score,
+        uh.score_from,
+        tc.category_id,
+        tcl.name as test_name,
+        cl.value as category_name
+      FROM user_history uh
+      LEFT JOIN test_category tc ON uh.test_id = tc.id
+      LEFT JOIN test_category_label tcl ON tc.id = tcl.test_category_id AND tcl.language_id = :languageId
+      LEFT JOIN category c ON tc.category_id = c.id
+      LEFT JOIN category_label cl ON c.id = cl.category_id AND cl.language_id = :languageId
+      WHERE uh.user_id = :userId
+      ORDER BY uh.created_date DESC
+      LIMIT 50
+    `, {
+      replacements: { userId, languageId }
+    });
+
+    res.json(results);
+  } catch (error) {
+    console.error('Error fetching user history:', error);
+    res.status(500).json({ error: 'Failed to fetch test history' });
+  }
+});
+
+// Get user's statistics
+router.get('/statistics/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const sequelize = require('../config/database');
+
+    const [stats] = await sequelize.query(`
+      SELECT 
+        COUNT(*) as total_tests,
+        COALESCE(SUM(score), 0) as total_correct,
+        COALESCE(SUM(score_from), 0) as total_questions,
+        COALESCE(ROUND(AVG(score * 100.0 / NULLIF(score_from, 0)), 1), 0) as average_score
+      FROM user_history
+      WHERE user_id = :userId
+    `, {
+      replacements: { userId }
+    });
+
+    res.json(stats[0] || { total_tests: 0, total_correct: 0, total_questions: 0, average_score: 0 });
+  } catch (error) {
+    console.error('Error fetching user statistics:', error);
+    res.status(500).json({ error: 'Failed to fetch statistics' });
   }
 });
 

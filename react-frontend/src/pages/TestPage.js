@@ -1,18 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { testsAPI } from '../services/api';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import TestPlayer from '../components/tests/TestPlayer';
 import './TestPage.css';
 
 const TestPage = () => {
   const { categoryId, testId } = useParams();
   const { currentLanguage } = useApp();
+  const { user } = useAuth();
   const [testData, setTestData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const startTimeRef = useRef(Date.now());
 
   useEffect(() => {
     loadTest();
+    startTimeRef.current = Date.now();
   }, [testId, currentLanguage.id]);
 
   const loadTest = async () => {
@@ -27,8 +31,16 @@ const TestPage = () => {
     }
   };
 
+  const formatDuration = (ms) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
+
   const handleTestComplete = async (answers) => {
-    const response = await testsAPI.submitTest(testId, answers);
+    const duration = formatDuration(Date.now() - startTimeRef.current);
+    const response = await testsAPI.submitTest(testId, answers, user?.id, duration);
     return response.data;
   };
 

@@ -65,8 +65,20 @@
   flex-shrink: 0;
 }
 
-/* ===== Login Button ===== */
+/* ===== Auth Buttons ===== */
+.header-auth-buttons {
+  display: flex;
+  gap: var(--spacing-2);
+}
+
 .btn-login {
+  padding: var(--spacing-2) var(--spacing-5);
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-full);
+  text-transform: lowercase;
+}
+
+.btn-register {
   padding: var(--spacing-2) var(--spacing-5);
   font-size: var(--font-size-sm);
   border-radius: var(--radius-full);
