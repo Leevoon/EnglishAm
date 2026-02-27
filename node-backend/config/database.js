@@ -8,7 +8,6 @@ const sequelize = new Sequelize(
   {
     host: process.env.DB_HOST || 'localhost',
     dialect: 'mysql',
-    charset: process.env.DB_CHARSET || 'utf8',
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
     pool: {
       max: 5,
@@ -18,7 +17,8 @@ const sequelize = new Sequelize(
     },
     define: {
       timestamps: false,
-      underscored: false
+      underscored: false,
+      charset: process.env.DB_CHARSET || 'utf8'
     }
   }
 );
