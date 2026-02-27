@@ -5,7 +5,9 @@
   "dependencies": {
     "ajv": "^8.17.1",
     "axios": "^1.5.0",
+    "ra-data-simple-rest": "^5.14.3",
     "react": "^18.2.0",
+    "react-admin": "^5.14.3",
     "react-audio-player": "^0.17.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.16.0",
@@ -36,6 +38,3 @@
   },
   "proxy": "http://localhost:3001"
 }
-
-
-

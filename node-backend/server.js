@@ -31,6 +31,9 @@ if (useMock) {
   app.use('/api/ads', require('./routes/ads'));
   app.use('/api/auth', require('./routes/auth'));
   app.use('/api/home', require('./routes/home'));
+  
+  // Admin routes
+  app.use('/api/admin', require('./routes/admin'));
 }
 
 // Health check endpoint

@@ -8,6 +8,9 @@ import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
+// Admin Panel
+import AdminApp from './admin/AdminApp';
+
 // Pages
 import Home from './pages/Home';
 import About from './pages/About';
@@ -41,103 +44,111 @@ import IeltsComplete from './components/ielts/IeltsComplete';
 
 import './App.css';
 
+// Main site layout wrapper
+const MainLayout = ({ children }) => (
+  <div className="App">
+    <Header />
+    <main className="main-content">
+      {children}
+    </main>
+    <Footer />
+  </div>
+);
+
 function App() {
   return (
     <AuthProvider>
       <AppProvider>
         <Router>
-          <div className="App">
-            <Header />
-            <main className="main-content">
-              <Routes>
-                {/* ========== PUBLIC PAGES ========== */}
-                <Route path="/" element={<Home />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/news" element={<NewsPage />} />
-                <Route path="/gallery" element={<GalleryPage />} />
-                <Route path="/lessons" element={<LessonsPage />} />
+          <Routes>
+            {/* ========== ADMIN PANEL (separate layout) ========== */}
+            <Route path="/admin/*" element={<AdminApp />} />
+            
+            {/* ========== MAIN SITE ========== */}
+            <Route path="/" element={<MainLayout><Home /></MainLayout>} />
+            <Route path="/about" element={<MainLayout><About /></MainLayout>} />
+            <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
+            <Route path="/news" element={<MainLayout><NewsPage /></MainLayout>} />
+            <Route path="/gallery" element={<MainLayout><GalleryPage /></MainLayout>} />
+            <Route path="/lessons" element={<MainLayout><LessonsPage /></MainLayout>} />
 
-                {/* ========== AUTH PAGES ========== */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
+            {/* ========== AUTH PAGES ========== */}
+            <Route path="/login" element={<MainLayout><Login /></MainLayout>} />
+            <Route path="/register" element={<MainLayout><Register /></MainLayout>} />
 
-                {/* ========== ACCOUNT PAGES ========== */}
-                <Route path="/account" element={
-                  <ProtectedRoute>
-                    <AccountPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/account/profile" element={
-                  <ProtectedRoute>
-                    <AccountPage section="profile" />
-                  </ProtectedRoute>
-                } />
-                <Route path="/account/results" element={
-                  <ProtectedRoute>
-                    <AccountPage section="results" />
-                  </ProtectedRoute>
-                } />
-                <Route path="/account/statistics" element={
-                  <ProtectedRoute>
-                    <AccountPage section="statistics" />
-                  </ProtectedRoute>
-                } />
-                <Route path="/account/subscription" element={
-                  <ProtectedRoute>
-                    <AccountPage section="subscription" />
-                  </ProtectedRoute>
-                } />
-                <Route path="/account/change-password" element={
-                  <ProtectedRoute>
-                    <AccountPage section="change-password" />
-                  </ProtectedRoute>
-                } />
+            {/* ========== ACCOUNT PAGES ========== */}
+            <Route path="/account" element={
+              <MainLayout>
+                <ProtectedRoute><AccountPage /></ProtectedRoute>
+              </MainLayout>
+            } />
+            <Route path="/account/profile" element={
+              <MainLayout>
+                <ProtectedRoute><AccountPage section="profile" /></ProtectedRoute>
+              </MainLayout>
+            } />
+            <Route path="/account/results" element={
+              <MainLayout>
+                <ProtectedRoute><AccountPage section="results" /></ProtectedRoute>
+              </MainLayout>
+            } />
+            <Route path="/account/statistics" element={
+              <MainLayout>
+                <ProtectedRoute><AccountPage section="statistics" /></ProtectedRoute>
+              </MainLayout>
+            } />
+            <Route path="/account/subscription" element={
+              <MainLayout>
+                <ProtectedRoute><AccountPage section="subscription" /></ProtectedRoute>
+              </MainLayout>
+            } />
+            <Route path="/account/change-password" element={
+              <MainLayout>
+                <ProtectedRoute><AccountPage section="change-password" /></ProtectedRoute>
+              </MainLayout>
+            } />
 
-                {/* ========== TESTS ========== */}
-                <Route path="/tests/:category" element={<TestListPage />} />
-                <Route path="/tests/:categoryId/:testId" element={
-                  <ProtectedRoute>
-                    <TestPage />
-                  </ProtectedRoute>
-                } />
+            {/* ========== TESTS ========== */}
+            <Route path="/tests/:category" element={<MainLayout><TestListPage /></MainLayout>} />
+            <Route path="/tests/:categoryId/:testId" element={
+              <MainLayout>
+                <ProtectedRoute><TestPage /></ProtectedRoute>
+              </MainLayout>
+            } />
 
-                {/* ========== TOEFL ========== */}
-                <Route path="/toefl/reading" element={<ToeflReading />} />
-                <Route path="/toefl/listening" element={<ToeflListening />} />
-                <Route path="/toefl/speaking" element={<ToeflSpeaking />} />
-                <Route path="/toefl/writing" element={<ToeflWriting />} />
-                <Route path="/toefl/writing/integrated" element={<ToeflWriting />} />
-                <Route path="/toefl/writing/independent" element={<ToeflWriting />} />
-                <Route path="/toefl/complete" element={<ToeflComplete />} />
+            {/* ========== TOEFL ========== */}
+            <Route path="/toefl/reading" element={<MainLayout><ToeflReading /></MainLayout>} />
+            <Route path="/toefl/listening" element={<MainLayout><ToeflListening /></MainLayout>} />
+            <Route path="/toefl/speaking" element={<MainLayout><ToeflSpeaking /></MainLayout>} />
+            <Route path="/toefl/writing" element={<MainLayout><ToeflWriting /></MainLayout>} />
+            <Route path="/toefl/writing/integrated" element={<MainLayout><ToeflWriting /></MainLayout>} />
+            <Route path="/toefl/writing/independent" element={<MainLayout><ToeflWriting /></MainLayout>} />
+            <Route path="/toefl/complete" element={<MainLayout><ToeflComplete /></MainLayout>} />
 
-                {/* ========== IELTS GENERAL ========== */}
-                <Route path="/ielts/general/reading" element={<IeltsReading />} />
-                <Route path="/ielts/general/listening" element={<IeltsListening />} />
-                <Route path="/ielts/general/speaking" element={<IeltsSpeaking />} />
-                <Route path="/ielts/general/writing" element={<IeltsWriting />} />
-                <Route path="/ielts/general/complete" element={<IeltsComplete />} />
+            {/* ========== IELTS GENERAL ========== */}
+            <Route path="/ielts/general/reading" element={<MainLayout><IeltsReading /></MainLayout>} />
+            <Route path="/ielts/general/listening" element={<MainLayout><IeltsListening /></MainLayout>} />
+            <Route path="/ielts/general/speaking" element={<MainLayout><IeltsSpeaking /></MainLayout>} />
+            <Route path="/ielts/general/writing" element={<MainLayout><IeltsWriting /></MainLayout>} />
+            <Route path="/ielts/general/complete" element={<MainLayout><IeltsComplete /></MainLayout>} />
 
-                {/* ========== IELTS ACADEMIC ========== */}
-                <Route path="/ielts/academic/reading" element={<IeltsReading />} />
-                <Route path="/ielts/academic/listening" element={<IeltsListening />} />
-                <Route path="/ielts/academic/speaking" element={<IeltsSpeaking />} />
-                <Route path="/ielts/academic/writing" element={<IeltsWriting />} />
-                <Route path="/ielts/academic/complete" element={<IeltsComplete />} />
+            {/* ========== IELTS ACADEMIC ========== */}
+            <Route path="/ielts/academic/reading" element={<MainLayout><IeltsReading /></MainLayout>} />
+            <Route path="/ielts/academic/listening" element={<MainLayout><IeltsListening /></MainLayout>} />
+            <Route path="/ielts/academic/speaking" element={<MainLayout><IeltsSpeaking /></MainLayout>} />
+            <Route path="/ielts/academic/writing" element={<MainLayout><IeltsWriting /></MainLayout>} />
+            <Route path="/ielts/academic/complete" element={<MainLayout><IeltsComplete /></MainLayout>} />
 
-                {/* ========== TRAINING ========== */}
-                <Route path="/training/reading" element={<LessonsPage />} />
-                <Route path="/training/listening" element={<LessonsPage />} />
-                <Route path="/training/speaking" element={<LessonsPage />} />
-                <Route path="/training/writing" element={<LessonsPage />} />
+            {/* ========== TRAINING ========== */}
+            <Route path="/training/reading" element={<MainLayout><LessonsPage /></MainLayout>} />
+            <Route path="/training/listening" element={<MainLayout><LessonsPage /></MainLayout>} />
+            <Route path="/training/speaking" element={<MainLayout><LessonsPage /></MainLayout>} />
+            <Route path="/training/writing" element={<MainLayout><LessonsPage /></MainLayout>} />
 
-                {/* ========== ERROR PAGES ========== */}
-                <Route path="/404" element={<NotFound />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
-            <Footer />
-          </div>
+            {/* ========== ERROR PAGES ========== */}
+            <Route path="/404" element={<MainLayout><NotFound /></MainLayout>} />
+            <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />
+          </Routes>
         </Router>
       </AppProvider>
     </AuthProvider>
