@@ -35,6 +35,7 @@ const AdminApp = () => {
       dashboard={Dashboard}
       basename="/admin"
       title="English.am Admin"
+      disableTelemetry
     >
       <Resource
         name="categories"
