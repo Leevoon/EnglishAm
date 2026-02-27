@@ -142,15 +142,40 @@ const MainSiteRoutes = () => (
   </Routes>
 );
 
+// Error boundary for admin
+class AdminErrorBoundary extends React.Component {
+  state = { hasError: false, error: null };
+  
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{padding: '50px', textAlign: 'center', fontFamily: 'Arial'}}>
+          <h1>Admin Panel Error</h1>
+          <p style={{color: 'red'}}>{this.state.error?.message || 'Something went wrong'}</p>
+          <p>Please check the browser console for more details.</p>
+          <button onClick={() => window.location.reload()}>Reload</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function App() {
   // Check if we're on admin route - render admin separately (it has its own router)
   if (window.location.pathname.startsWith('/admin')) {
     // Lazy load admin to avoid router conflicts
     const AdminApp = React.lazy(() => import('./admin/AdminApp'));
     return (
-      <React.Suspense fallback={<div style={{padding: '50px', textAlign: 'center'}}>Loading Admin...</div>}>
-        <AdminApp />
-      </React.Suspense>
+      <AdminErrorBoundary>
+        <React.Suspense fallback={<div style={{padding: '50px', textAlign: 'center'}}>Loading Admin...</div>}>
+          <AdminApp />
+        </React.Suspense>
+      </AdminErrorBoundary>
     );
   }
 
