@@ -272,6 +272,10 @@ const mockData = {
 
   users: [
     { id: 1, email: 'test@example.com', password: '$2b$10$test', first_name: 'Test', last_name: 'User', block: 0 }
+  ],
+
+  admins: [
+    { id: 1, email: 'admin@english.am', password: 'admin123', name: 'Admin', group_id: 1, group_name: 'Super Admin', status: 1 }
   ]
 };
 

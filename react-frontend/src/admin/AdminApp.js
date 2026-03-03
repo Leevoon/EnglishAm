@@ -1,6 +1,6 @@
 import React from 'react';
-import { Admin, Resource, CustomRoutes } from 'react-admin';
-import { Route } from 'react-router-dom';
+import { Admin, Resource } from 'react-admin';
+import { BrowserRouter } from 'react-router-dom';
 
 // Providers
 import dataProvider from './dataProvider';
@@ -29,14 +29,15 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 
 const AdminApp = () => {
   return (
-    <Admin
-      dataProvider={dataProvider}
-      authProvider={authProvider}
-      dashboard={Dashboard}
-      basename="/admin"
-      title="English.am Admin"
-      disableTelemetry
-    >
+    <BrowserRouter basename="/admin">
+      <Admin
+        dataProvider={dataProvider}
+        authProvider={authProvider}
+        dashboard={Dashboard}
+        requireAuth
+        title="English.am Admin"
+        disableTelemetry
+      >
       <Resource
         name="categories"
         list={CategoryList}
@@ -94,6 +95,7 @@ const AdminApp = () => {
         options={{ label: 'Admins' }}
       />
     </Admin>
+    </BrowserRouter>
   );
 };
 

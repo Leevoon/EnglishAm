@@ -41,6 +41,9 @@ import IeltsComplete from './components/ielts/IeltsComplete';
 
 import './App.css';
 
+// Lazy load admin panel (must be at module level to avoid re-renders)
+const AdminApp = React.lazy(() => import('./admin/AdminApp'));
+
 // Main site layout wrapper
 const MainLayout = ({ children }) => (
   <div className="App">
@@ -168,8 +171,6 @@ class AdminErrorBoundary extends React.Component {
 function App() {
   // Check if we're on admin route - render admin separately (it has its own router)
   if (window.location.pathname.startsWith('/admin')) {
-    // Lazy load admin to avoid router conflicts
-    const AdminApp = React.lazy(() => import('./admin/AdminApp'));
     return (
       <AdminErrorBoundary>
         <React.Suspense fallback={<div style={{padding: '50px', textAlign: 'center'}}>Loading Admin...</div>}>

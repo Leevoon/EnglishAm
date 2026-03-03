@@ -290,4 +290,127 @@ router.get('/ads', (req, res) => {
   ]);
 });
 
+// ========== ADMIN MOCK ROUTES ==========
+
+// Admin Auth
+router.post('/admin/auth/login', (req, res) => {
+  const { email, password } = req.body;
+  const admin = mockData.admins.find(a => a.email === email && a.password === password);
+  if (admin) {
+    res.json({
+      token: 'mock-admin-jwt-token-12345',
+      admin: { id: admin.id, name: admin.name, email: admin.email, group_name: admin.group_name, permissions: ['admin'] }
+    });
+  } else {
+    res.status(401).json({ message: 'Invalid credentials' });
+  }
+});
+
+// Generic admin list/detail helper
+const adminList = (data, req) => {
+  const { page = 1, perPage = 10, sortField = 'id', sortOrder = 'ASC' } = req.query;
+  const sorted = [...data].sort((a, b) => {
+    if (sortOrder === 'DESC') return (b[sortField] || 0) > (a[sortField] || 0) ? 1 : -1;
+    return (a[sortField] || 0) > (b[sortField] || 0) ? 1 : -1;
+  });
+  const start = (parseInt(page) - 1) * parseInt(perPage);
+  return { data: sorted.slice(start, start + parseInt(perPage)), total: data.length };
+};
+
+// Admin CRUD for categories
+router.get('/admin/categories', (req, res) => {
+  // Flatten categories for admin list
+  const flat = [];
+  const flatten = (cats) => cats.forEach(c => { flat.push({ id: c.id, name: c.label || c.name, description: c.description || '', parent_id: c.parent_id, status: 1, sort_order: c.sort_order }); if (c.children) flatten(c.children); });
+  flatten(mockData.categories);
+  res.json(adminList(flat, req));
+});
+router.get('/admin/categories/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const find = (cats) => { for (const c of cats) { if (c.id === id) return c; if (c.children) { const f = find(c.children); if (f) return f; } } return null; };
+  const cat = find(mockData.categories);
+  res.json(cat ? { id: cat.id, name: cat.label || cat.name, description: cat.description || '', parent_id: cat.parent_id, status: 1, sort_order: cat.sort_order } : {});
+});
+router.post('/admin/categories', (req, res) => res.json({ id: Date.now(), ...req.body }));
+router.put('/admin/categories/:id', (req, res) => res.json({ id: parseInt(req.params.id), ...req.body }));
+router.delete('/admin/categories/:id', (req, res) => res.json({ id: parseInt(req.params.id) }));
+
+// Admin CRUD for test-categories
+router.get('/admin/test-categories', (req, res) => {
+  const data = mockData.testCategories.map(tc => ({ id: tc.id, name: tc.name, description: tc.description, category_id: tc.category_id, parent_id: tc.parent_id, status: 1, sort_order: tc.sortOrder }));
+  res.json(adminList(data, req));
+});
+router.get('/admin/test-categories/:id', (req, res) => {
+  const tc = mockData.testCategories.find(t => t.id === parseInt(req.params.id));
+  res.json(tc ? { id: tc.id, name: tc.name, description: tc.description, category_id: tc.category_id, parent_id: tc.parent_id, status: 1, sort_order: tc.sortOrder } : {});
+});
+router.post('/admin/test-categories', (req, res) => res.json({ id: Date.now(), ...req.body }));
+router.put('/admin/test-categories/:id', (req, res) => res.json({ id: parseInt(req.params.id), ...req.body }));
+router.delete('/admin/test-categories/:id', (req, res) => res.json({ id: parseInt(req.params.id) }));
+
+// Admin CRUD for tests
+router.get('/admin/tests', (req, res) => {
+  const data = mockData.tests.map(t => ({ id: t.id, title: t.title, description: t.description, testCategoryId: t.testCategoryId, status: 1 }));
+  res.json(adminList(data, req));
+});
+router.get('/admin/tests/:id', (req, res) => {
+  const t = mockData.tests.find(t => t.id === parseInt(req.params.id));
+  res.json(t ? { id: t.id, title: t.title, description: t.description, testCategoryId: t.testCategoryId, status: 1 } : {});
+});
+router.post('/admin/tests', (req, res) => res.json({ id: Date.now(), ...req.body }));
+router.put('/admin/tests/:id', (req, res) => res.json({ id: parseInt(req.params.id), ...req.body }));
+router.delete('/admin/tests/:id', (req, res) => res.json({ id: parseInt(req.params.id) }));
+
+// Admin CRUD for test-levels
+router.get('/admin/test-levels', (req, res) => {
+  const data = mockData.testLevels.map(l => ({ id: l.id, name: l.name, status: 1, sort_order: l.sortOrder }));
+  res.json(adminList(data, req));
+});
+router.get('/admin/test-levels/:id', (req, res) => {
+  const l = mockData.testLevels.find(l => l.id === parseInt(req.params.id));
+  res.json(l ? { id: l.id, name: l.name, status: 1, sort_order: l.sortOrder } : {});
+});
+router.post('/admin/test-levels', (req, res) => res.json({ id: Date.now(), ...req.body }));
+router.put('/admin/test-levels/:id', (req, res) => res.json({ id: parseInt(req.params.id), ...req.body }));
+router.delete('/admin/test-levels/:id', (req, res) => res.json({ id: parseInt(req.params.id) }));
+
+// Admin CRUD for languages
+router.get('/admin/languages', (req, res) => {
+  const data = mockData.languages.map(l => ({ id: l.id, code: l.code, name: l.name, status: 1 }));
+  res.json(adminList(data, req));
+});
+router.get('/admin/languages/:id', (req, res) => {
+  const l = mockData.languages.find(l => l.id === parseInt(req.params.id));
+  res.json(l || {});
+});
+router.post('/admin/languages', (req, res) => res.json({ id: Date.now(), ...req.body }));
+router.put('/admin/languages/:id', (req, res) => res.json({ id: parseInt(req.params.id), ...req.body }));
+router.delete('/admin/languages/:id', (req, res) => res.json({ id: parseInt(req.params.id) }));
+
+// Admin CRUD for users
+router.get('/admin/users', (req, res) => {
+  const data = mockData.users.map(u => ({ id: u.id, email: u.email, first_name: u.first_name, last_name: u.last_name, block: u.block }));
+  res.json(adminList(data, req));
+});
+router.get('/admin/users/:id', (req, res) => {
+  const u = mockData.users.find(u => u.id === parseInt(req.params.id));
+  res.json(u ? { id: u.id, email: u.email, first_name: u.first_name, last_name: u.last_name, block: u.block } : {});
+});
+router.post('/admin/users', (req, res) => res.json({ id: Date.now(), ...req.body }));
+router.put('/admin/users/:id', (req, res) => res.json({ id: parseInt(req.params.id), ...req.body }));
+router.delete('/admin/users/:id', (req, res) => res.json({ id: parseInt(req.params.id) }));
+
+// Admin CRUD for admins
+router.get('/admin/admins', (req, res) => {
+  const data = mockData.admins.map(a => ({ id: a.id, email: a.email, name: a.name, group_id: a.group_id, group_name: a.group_name, status: a.status }));
+  res.json(adminList(data, req));
+});
+router.get('/admin/admins/:id', (req, res) => {
+  const a = mockData.admins.find(a => a.id === parseInt(req.params.id));
+  res.json(a ? { id: a.id, email: a.email, name: a.name, group_id: a.group_id, group_name: a.group_name, status: a.status } : {});
+});
+router.post('/admin/admins', (req, res) => res.json({ id: Date.now(), ...req.body }));
+router.put('/admin/admins/:id', (req, res) => res.json({ id: parseInt(req.params.id), ...req.body }));
+router.delete('/admin/admins/:id', (req, res) => res.json({ id: parseInt(req.params.id) }));
+
 module.exports = router;
