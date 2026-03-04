@@ -53,8 +53,13 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Admin login error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Admin login error:', error.message);
+    console.error('Full error:', error);
+    const isDbError = error.name === 'SequelizeConnectionError' || error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT';
+    res.status(500).json({
+      message: isDbError ? 'Database connection failed. Check backend DB config.' : 'Server error',
+      ...(process.env.NODE_ENV === 'development' && { detail: error.message })
+    });
   }
 });
 
