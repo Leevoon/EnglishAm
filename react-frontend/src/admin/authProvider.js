@@ -12,8 +12,14 @@ const authProvider = {
     const response = await fetch(request);
     
     if (response.status < 200 || response.status >= 300) {
-      const error = await response.json();
-      throw new Error(error.message || 'Invalid credentials');
+      try {
+        const error = await response.json();
+        message = error.message || message;
+      } catch (_) {}
+      if (response.status >= 500) {
+        message = message || 'Server error. The backend may be unable to connect to the database.';
+      }
+      throw new Error(message);
     }
 
     const { token, admin } = await response.json();

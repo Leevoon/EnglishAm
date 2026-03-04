@@ -22,16 +22,32 @@ router.post('/login', async (req, res) => {
     // Hash password with MD5 (matching legacy system)
     const hashedPassword = md5(password);
 
-    // Find admin by email and password
-    const [admin] = await sequelize.query(`
-      SELECT a.*, ag.name as group_name 
-      FROM admins a
-      LEFT JOIN admins_groups ag ON a.group_id = ag.id
-      WHERE a.email = :email AND a.password = :password AND a.status = 1
-    `, {
-      replacements: { email, password: hashedPassword },
-      type: QueryTypes.SELECT
-    });
+    let admin;
+    try {
+      // Try with admins_groups join (ag.title)
+      [admin] = await sequelize.query(`
+        SELECT a.*, ag.title as group_name 
+        FROM admins a
+        LEFT JOIN admins_groups ag ON a.group_id = ag.id
+        WHERE a.email = :email AND a.password = :password AND a.status = 1
+      `, {
+        replacements: { email, password: hashedPassword },
+        type: QueryTypes.SELECT
+      });
+    } catch (joinErr) {
+      // Fallback: query admins only (if admins_groups missing or schema differs)
+      if (joinErr.name === 'SequelizeDatabaseError' || joinErr.parent?.code === 'ER_BAD_FIELD_ERROR' || joinErr.parent?.code === 'ER_NO_SUCH_TABLE') {
+        [admin] = await sequelize.query(`
+          SELECT * FROM admins
+          WHERE email = :email AND password = :password AND status = 1
+        `, {
+          replacements: { email, password: hashedPassword },
+          type: QueryTypes.SELECT
+        });
+      } else {
+        throw joinErr;
+      }
+    }
 
     if (!admin) {
       return res.status(401).json({ message: 'Invalid credentials' });
@@ -48,7 +64,7 @@ router.post('/login', async (req, res) => {
         email: admin.email,
         name: admin.name,
         avatar: admin.avatar,
-        group: admin.group_name,
+        group: admin.group_name || null,
         permissions: [] // Could load from admins_action table
       }
     });

@@ -41,7 +41,7 @@ router.get('/', async (req, res) => {
 
     const data = await sequelize.query(`
       SELECT a.id, a.email, a.name, a.status, a.created_date, a.avatar, a.group_id,
-             ag.name as group_name
+             ag.title as group_name
       FROM admins a
       LEFT JOIN admins_groups ag ON a.group_id = ag.id
       ${whereClause}
@@ -63,7 +63,7 @@ router.get('/', async (req, res) => {
 router.get('/groups/list', async (req, res) => {
   try {
     const groups = await sequelize.query(`
-      SELECT id, name FROM admins_groups ORDER BY name ASC
+      SELECT id, title FROM admins_groups ORDER BY title ASC
     `, { type: QueryTypes.SELECT });
 
     res.json(groups);
@@ -78,7 +78,7 @@ router.get('/:id', async (req, res) => {
   try {
     const [admin] = await sequelize.query(`
       SELECT a.id, a.email, a.name, a.status, a.created_date, a.avatar, a.group_id,
-             ag.name as group_name
+             ag.title as group_name
       FROM admins a
       LEFT JOIN admins_groups ag ON a.group_id = ag.id
       WHERE a.id = :id
