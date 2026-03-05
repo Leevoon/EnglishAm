@@ -12,7 +12,6 @@ import {
   TextInput,
   NumberInput,
   SelectInput,
-  BooleanInput,
   Filter,
   useRecordContext,
 } from 'react-admin';
@@ -36,7 +35,6 @@ export const CategoryList = () => (
     <Datagrid rowClick="edit">
       <NumberField source="id" />
       <TextField source="name" />
-      <TextField source="description" />
       <NumberField source="parent_id" label="Parent ID" />
       <StatusField source="status" label="Status" />
       <NumberField source="sort_order" label="Order" />
@@ -52,7 +50,6 @@ export const CategoryEdit = () => (
     <SimpleForm>
       <TextInput source="id" disabled />
       <TextInput source="name" fullWidth required />
-      <TextInput source="description" multiline rows={4} fullWidth />
       <NumberInput source="parent_id" label="Parent ID" defaultValue={0} />
       <SelectInput
         source="status"
@@ -71,7 +68,6 @@ export const CategoryCreate = () => (
   <Create>
     <SimpleForm>
       <TextInput source="name" fullWidth required />
-      <TextInput source="description" multiline rows={4} fullWidth />
       <NumberInput source="parent_id" label="Parent ID" defaultValue={0} />
       <SelectInput
         source="status"
@@ -85,4 +81,3 @@ export const CategoryCreate = () => (
     </SimpleForm>
   </Create>
 );
-

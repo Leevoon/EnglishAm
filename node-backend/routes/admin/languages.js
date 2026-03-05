@@ -3,11 +3,12 @@ const router = express.Router();
 const sequelize = require('../../config/database');
 const { QueryTypes } = require('sequelize');
 
+const ALLOWED_SORT_FIELDS = ['id', 'name', 'code', 'status', 'sort_order', 'created_date'];
 const buildQuery = (req) => {
   const page = parseInt(req.query.page) || 1;
-  const perPage = parseInt(req.query.perPage) || 10;
-  const sortField = req.query.sortField || 'id';
-  const sortOrder = req.query.sortOrder || 'ASC';
+  const perPage = Math.min(parseInt(req.query.perPage) || 10, 100);
+  const sortField = ALLOWED_SORT_FIELDS.includes(req.query.sortField) ? req.query.sortField : 'id';
+  const sortOrder = req.query.sortOrder === 'DESC' ? 'DESC' : 'ASC';
   const filter = req.query.filter ? JSON.parse(req.query.filter) : {};
   return { page, perPage, sortField, sortOrder, filter };
 };
@@ -22,7 +23,7 @@ router.get('/', async (req, res) => {
     const replacements = {};
 
     if (filter.q) {
-      whereClause = 'WHERE name LIKE :search OR code LIKE :search';
+      whereClause = 'WHERE name LIKE :search OR iso LIKE :search';
       replacements.search = `%${filter.q}%`;
     }
 
@@ -37,7 +38,7 @@ router.get('/', async (req, res) => {
     `, { replacements, type: QueryTypes.SELECT });
 
     const data = await sequelize.query(`
-      SELECT * FROM languages
+      SELECT id, name, iso as code, status, sort_order, image, created_date FROM languages
       ${whereClause}
       ORDER BY ${sortField} ${sortOrder}
       LIMIT :limit OFFSET :offset
@@ -57,7 +58,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const [language] = await sequelize.query(`
-      SELECT * FROM languages WHERE id = :id
+      SELECT id, name, iso as code, status, sort_order, image, created_date FROM languages WHERE id = :id
     `, {
       replacements: { id: req.params.id },
       type: QueryTypes.SELECT
@@ -80,10 +81,10 @@ router.post('/', async (req, res) => {
     const { name, code, status = 1, sort_order = 0, image } = req.body;
 
     const [result] = await sequelize.query(`
-      INSERT INTO languages (name, code, status, sort_order, image, created_date)
-      VALUES (:name, :code, :status, :sort_order, :image, NOW())
+      INSERT INTO languages (name, iso, status, sort_order, image, created_date)
+      VALUES (:name, :iso, :status, :sort_order, :image, NOW())
     `, {
-      replacements: { name, code, status, sort_order, image: image || null },
+      replacements: { name, iso: code, status, sort_order, image: image || null },
       type: QueryTypes.INSERT
     });
 
@@ -101,15 +102,15 @@ router.put('/:id', async (req, res) => {
     const id = req.params.id;
 
     await sequelize.query(`
-      UPDATE languages 
+      UPDATE languages
       SET name = COALESCE(:name, name),
-          code = COALESCE(:code, code),
+          iso = COALESCE(:iso, iso),
           status = COALESCE(:status, status),
           sort_order = COALESCE(:sort_order, sort_order),
           image = COALESCE(:image, image)
       WHERE id = :id
     `, {
-      replacements: { id, name, code, status, sort_order, image },
+      replacements: { id, name, iso: code, status, sort_order, image },
       type: QueryTypes.UPDATE
     });
 

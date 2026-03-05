@@ -6,11 +6,12 @@ const { QueryTypes } = require('sequelize');
 
 const md5 = (str) => crypto.createHash('md5').update(str).digest('hex');
 
+const ALLOWED_SORT_FIELDS = ['id', 'email', 'name', 'status', 'group_id', 'created_date'];
 const buildQuery = (req) => {
   const page = parseInt(req.query.page) || 1;
-  const perPage = parseInt(req.query.perPage) || 10;
-  const sortField = req.query.sortField || 'id';
-  const sortOrder = req.query.sortOrder || 'ASC';
+  const perPage = Math.min(parseInt(req.query.perPage) || 10, 100);
+  const sortField = ALLOWED_SORT_FIELDS.includes(req.query.sortField) ? req.query.sortField : 'id';
+  const sortOrder = req.query.sortOrder === 'DESC' ? 'DESC' : 'ASC';
   const filter = req.query.filter ? JSON.parse(req.query.filter) : {};
   return { page, perPage, sortField, sortOrder, filter };
 };

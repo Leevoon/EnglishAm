@@ -4,13 +4,14 @@ const sequelize = require('../../config/database');
 const { QueryTypes } = require('sequelize');
 
 // Helper to build pagination, sort, and filter
+const ALLOWED_SORT_FIELDS = ['id', 'name', 'status', 'sort_order', 'parent_id', 'created_date'];
 const buildQuery = (req) => {
   const page = parseInt(req.query.page) || 1;
-  const perPage = parseInt(req.query.perPage) || 10;
-  const sortField = req.query.sortField || 'id';
-  const sortOrder = req.query.sortOrder || 'ASC';
+  const perPage = Math.min(parseInt(req.query.perPage) || 10, 100);
+  const sortField = ALLOWED_SORT_FIELDS.includes(req.query.sortField) ? req.query.sortField : 'id';
+  const sortOrder = req.query.sortOrder === 'DESC' ? 'DESC' : 'ASC';
   const filter = req.query.filter ? JSON.parse(req.query.filter) : {};
-  
+
   return { page, perPage, sortField, sortOrder, filter };
 };
 
@@ -24,7 +25,7 @@ router.get('/', async (req, res) => {
     const replacements = {};
 
     if (filter.q) {
-      whereClause = 'WHERE cl.name LIKE :search OR c.id LIKE :search';
+      whereClause = 'WHERE cl.value LIKE :search OR c.id LIKE :search';
       replacements.search = `%${filter.q}%`;
     }
 
@@ -36,7 +37,7 @@ router.get('/', async (req, res) => {
 
     // Get total count
     const [countResult] = await sequelize.query(`
-      SELECT COUNT(DISTINCT c.id) as total 
+      SELECT COUNT(DISTINCT c.id) as total
       FROM category c
       LEFT JOIN category_label cl ON c.id = cl.category_id AND cl.language_id = 1
       ${whereClause}
@@ -44,11 +45,11 @@ router.get('/', async (req, res) => {
 
     // Get data
     const data = await sequelize.query(`
-      SELECT c.*, cl.name, cl.description
+      SELECT c.*, cl.value as name
       FROM category c
       LEFT JOIN category_label cl ON c.id = cl.category_id AND cl.language_id = 1
       ${whereClause}
-      ORDER BY ${sortField === 'name' ? 'cl.name' : `c.${sortField}`} ${sortOrder}
+      ORDER BY ${sortField === 'name' ? 'cl.value' : `c.${sortField}`} ${sortOrder}
       LIMIT :limit OFFSET :offset
     `, {
       replacements: { ...replacements, limit: perPage, offset },
@@ -69,7 +70,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const [category] = await sequelize.query(`
-      SELECT c.*, cl.name, cl.description
+      SELECT c.*, cl.value as name
       FROM category c
       LEFT JOIN category_label cl ON c.id = cl.category_id AND cl.language_id = 1
       WHERE c.id = :id
@@ -92,9 +93,9 @@ router.get('/:id', async (req, res) => {
 // POST - Create category
 router.post('/', async (req, res) => {
   const t = await sequelize.transaction();
-  
+
   try {
-    const { name, description, parent_id = 0, status = 1, sort_order = 0 } = req.body;
+    const { name, parent_id = 0, status = 1, sort_order = 0 } = req.body;
 
     // Insert category
     const [result] = await sequelize.query(`
@@ -110,17 +111,17 @@ router.post('/', async (req, res) => {
 
     // Insert label
     await sequelize.query(`
-      INSERT INTO category_label (category_id, language_id, name, description)
-      VALUES (:category_id, 1, :name, :description)
+      INSERT INTO category_label (category_id, language_id, value)
+      VALUES (:category_id, 1, :value)
     `, {
-      replacements: { category_id: categoryId, name, description: description || '' },
+      replacements: { category_id: categoryId, value: name || '' },
       type: QueryTypes.INSERT,
       transaction: t
     });
 
     await t.commit();
 
-    res.json({ id: categoryId, name, description, parent_id, status, sort_order });
+    res.json({ id: categoryId, name, parent_id, status, sort_order });
   } catch (error) {
     await t.rollback();
     console.error('Error creating category:', error);
@@ -131,14 +132,14 @@ router.post('/', async (req, res) => {
 // PUT - Update category
 router.put('/:id', async (req, res) => {
   const t = await sequelize.transaction();
-  
+
   try {
-    const { name, description, parent_id, status, sort_order } = req.body;
+    const { name, parent_id, status, sort_order } = req.body;
     const id = req.params.id;
 
     // Update category
     await sequelize.query(`
-      UPDATE category 
+      UPDATE category
       SET parent_id = COALESCE(:parent_id, parent_id),
           status = COALESCE(:status, status),
           sort_order = COALESCE(:sort_order, sort_order)
@@ -160,21 +161,20 @@ router.put('/:id', async (req, res) => {
 
     if (existingLabel) {
       await sequelize.query(`
-        UPDATE category_label 
-        SET name = COALESCE(:name, name),
-            description = COALESCE(:description, description)
+        UPDATE category_label
+        SET value = COALESCE(:value, value)
         WHERE category_id = :id AND language_id = 1
       `, {
-        replacements: { id, name, description },
+        replacements: { id, value: name },
         type: QueryTypes.UPDATE,
         transaction: t
       });
     } else {
       await sequelize.query(`
-        INSERT INTO category_label (category_id, language_id, name, description)
-        VALUES (:id, 1, :name, :description)
+        INSERT INTO category_label (category_id, language_id, value)
+        VALUES (:id, 1, :value)
       `, {
-        replacements: { id, name: name || '', description: description || '' },
+        replacements: { id, value: name || '' },
         type: QueryTypes.INSERT,
         transaction: t
       });
@@ -182,7 +182,7 @@ router.put('/:id', async (req, res) => {
 
     await t.commit();
 
-    res.json({ id, name, description, parent_id, status, sort_order });
+    res.json({ id, name, parent_id, status, sort_order });
   } catch (error) {
     await t.rollback();
     console.error('Error updating category:', error);
@@ -193,7 +193,7 @@ router.put('/:id', async (req, res) => {
 // DELETE - Delete category
 router.delete('/:id', async (req, res) => {
   const t = await sequelize.transaction();
-  
+
   try {
     const id = req.params.id;
 
@@ -226,4 +226,3 @@ router.delete('/:id', async (req, res) => {
 });
 
 module.exports = router;
-

@@ -12,6 +12,7 @@ const authProvider = {
     const response = await fetch(request);
     
     if (response.status < 200 || response.status >= 300) {
+      let message = 'Invalid credentials';
       try {
         const error = await response.json();
         message = error.message || message;

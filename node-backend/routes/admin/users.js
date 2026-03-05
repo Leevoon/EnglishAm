@@ -6,11 +6,12 @@ const { QueryTypes } = require('sequelize');
 
 const md5 = (str) => crypto.createHash('md5').update(str).digest('hex');
 
+const ALLOWED_SORT_FIELDS = ['id', 'email', 'first_name', 'last_name', 'block', 'created_date'];
 const buildQuery = (req) => {
   const page = parseInt(req.query.page) || 1;
-  const perPage = parseInt(req.query.perPage) || 10;
-  const sortField = req.query.sortField || 'id';
-  const sortOrder = req.query.sortOrder || 'ASC';
+  const perPage = Math.min(parseInt(req.query.perPage) || 10, 100);
+  const sortField = ALLOWED_SORT_FIELDS.includes(req.query.sortField) ? req.query.sortField : 'id';
+  const sortOrder = req.query.sortOrder === 'DESC' ? 'DESC' : 'ASC';
   const filter = req.query.filter ? JSON.parse(req.query.filter) : {};
   return { page, perPage, sortField, sortOrder, filter };
 };
@@ -25,15 +26,16 @@ router.get('/', async (req, res) => {
     const replacements = {};
 
     if (filter.q) {
-      whereClause = 'WHERE email LIKE :search OR name LIKE :search OR surname LIKE :search';
+      whereClause = 'WHERE email LIKE :search OR first_name LIKE :search OR last_name LIKE :search OR user_name LIKE :search';
       replacements.search = `%${filter.q}%`;
     }
 
     if (filter.status !== undefined) {
-      whereClause = whereClause 
-        ? `${whereClause} AND status = :status`
-        : 'WHERE status = :status';
-      replacements.status = filter.status;
+      const block = filter.status === 1 ? 0 : 1;
+      whereClause = whereClause
+        ? `${whereClause} AND block = :block`
+        : 'WHERE block = :block';
+      replacements.block = block;
     }
 
     if (filter.ids) {
@@ -47,7 +49,8 @@ router.get('/', async (req, res) => {
     `, { replacements, type: QueryTypes.SELECT });
 
     const data = await sequelize.query(`
-      SELECT id, email, name, surname, phone, status, created_date, avatar, membership_id
+      SELECT id, email, user_name, first_name, last_name, block, created_date, avatar,
+             CASE WHEN block = 0 THEN 1 ELSE 0 END as status
       FROM users
       ${whereClause}
       ORDER BY ${sortField} ${sortOrder}
@@ -68,7 +71,8 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const [user] = await sequelize.query(`
-      SELECT id, email, name, surname, phone, status, created_date, avatar, membership_id
+      SELECT id, email, user_name, first_name, last_name, block, created_date, avatar, gender, dob,
+             CASE WHEN block = 0 THEN 1 ELSE 0 END as status
       FROM users WHERE id = :id
     `, {
       replacements: { id: req.params.id },
@@ -89,7 +93,7 @@ router.get('/:id', async (req, res) => {
 // POST - Create user
 router.post('/', async (req, res) => {
   try {
-    const { email, password, name, surname, phone, status = 1, membership_id } = req.body;
+    const { email, password, user_name, first_name, last_name, status = 1 } = req.body;
 
     // Check if email exists
     const [existing] = await sequelize.query(`
@@ -101,19 +105,22 @@ router.post('/', async (req, res) => {
     }
 
     const hashedPassword = md5(password);
+    const block = status === 1 ? 0 : 1;
 
     const [result] = await sequelize.query(`
-      INSERT INTO users (email, password, name, surname, phone, status, membership_id, created_date)
-      VALUES (:email, :password, :name, :surname, :phone, :status, :membership_id, NOW())
+      INSERT INTO users (email, password, user_name, first_name, last_name, block, created_date)
+      VALUES (:email, :password, :user_name, :first_name, :last_name, :block, NOW())
     `, {
-      replacements: { 
-        email, password: hashedPassword, name: name || '', surname: surname || '',
-        phone: phone || '', status, membership_id: membership_id || null
+      replacements: {
+        email, password: hashedPassword,
+        user_name: user_name || email.split('@')[0],
+        first_name: first_name || '', last_name: last_name || '',
+        block
       },
       type: QueryTypes.INSERT
     });
 
-    res.json({ id: result, email, name, surname, status });
+    res.json({ id: result, email, user_name, first_name, last_name, status });
   } catch (error) {
     console.error('Error creating user:', error);
     res.status(500).json({ message: 'Server error' });
@@ -123,11 +130,17 @@ router.post('/', async (req, res) => {
 // PUT - Update user
 router.put('/:id', async (req, res) => {
   try {
-    const { email, password, name, surname, phone, status, membership_id } = req.body;
+    const { email, password, user_name, first_name, last_name, status } = req.body;
     const id = req.params.id;
 
     let passwordUpdate = '';
-    const replacements = { id, email, name, surname, phone, status, membership_id };
+    const replacements = { id, email, user_name, first_name, last_name };
+
+    if (status !== undefined) {
+      replacements.block = status === 1 ? 0 : 1;
+    } else {
+      replacements.block = undefined;
+    }
 
     if (password) {
       passwordUpdate = ', password = :password';
@@ -135,13 +148,12 @@ router.put('/:id', async (req, res) => {
     }
 
     await sequelize.query(`
-      UPDATE users 
+      UPDATE users
       SET email = COALESCE(:email, email),
-          name = COALESCE(:name, name),
-          surname = COALESCE(:surname, surname),
-          phone = COALESCE(:phone, phone),
-          status = COALESCE(:status, status),
-          membership_id = COALESCE(:membership_id, membership_id)
+          user_name = COALESCE(:user_name, user_name),
+          first_name = COALESCE(:first_name, first_name),
+          last_name = COALESCE(:last_name, last_name),
+          block = COALESCE(:block, block)
           ${passwordUpdate}
       WHERE id = :id
     `, {
@@ -149,7 +161,7 @@ router.put('/:id', async (req, res) => {
       type: QueryTypes.UPDATE
     });
 
-    res.json({ id, email, name, surname, status });
+    res.json({ id, email, user_name, first_name, last_name, status });
   } catch (error) {
     console.error('Error updating user:', error);
     res.status(500).json({ message: 'Server error' });
@@ -174,4 +186,3 @@ router.delete('/:id', async (req, res) => {
 });
 
 module.exports = router;
-

@@ -16,7 +16,6 @@ import {
   SimpleFormIterator,
   BooleanInput,
   Filter,
-  ReferenceInput,
   useRecordContext,
   TabbedForm,
   FormTab,
@@ -40,7 +39,6 @@ export const TestList = () => (
       <NumberField source="id" />
       <TextField source="question" label="Question" />
       <TextField source="category_name" label="Category" />
-      <TextField source="level_name" label="Level" />
       <StatusField source="status" label="Status" />
       <NumberField source="sort_order" label="Order" />
       <EditButton />
@@ -55,9 +53,7 @@ export const TestEdit = () => (
       <FormTab label="Basic Info">
         <TextInput source="id" disabled />
         <TextInput source="question" multiline rows={3} fullWidth required />
-        <TextInput source="explanation" multiline rows={4} fullWidth label="Explanation" />
         <NumberInput source="test_category_id" label="Test Category ID" required />
-        <NumberInput source="test_level_id" label="Test Level ID" required />
         <SelectInput
           source="status"
           choices={[
@@ -67,12 +63,12 @@ export const TestEdit = () => (
         />
         <NumberInput source="sort_order" label="Sort Order" defaultValue={0} />
       </FormTab>
-      
+
       <FormTab label="Media">
         <TextInput source="image" label="Image Path" fullWidth />
         <TextInput source="audio" label="Audio Path" fullWidth />
       </FormTab>
-      
+
       <FormTab label="Answers">
         <ArrayInput source="answers">
           <SimpleFormIterator inline>
@@ -90,9 +86,7 @@ export const TestCreate = () => (
     <TabbedForm>
       <FormTab label="Basic Info">
         <TextInput source="question" multiline rows={3} fullWidth required />
-        <TextInput source="explanation" multiline rows={4} fullWidth label="Explanation" />
         <NumberInput source="test_category_id" label="Test Category ID" required />
-        <NumberInput source="test_level_id" label="Test Level ID" required />
         <SelectInput
           source="status"
           choices={[
@@ -103,12 +97,12 @@ export const TestCreate = () => (
         />
         <NumberInput source="sort_order" label="Sort Order" defaultValue={0} />
       </FormTab>
-      
+
       <FormTab label="Media">
         <TextInput source="image" label="Image Path" fullWidth />
         <TextInput source="audio" label="Audio Path" fullWidth />
       </FormTab>
-      
+
       <FormTab label="Answers">
         <ArrayInput source="answers">
           <SimpleFormIterator inline>
@@ -120,4 +114,3 @@ export const TestCreate = () => (
     </TabbedForm>
   </Create>
 );
-

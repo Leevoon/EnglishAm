@@ -12,7 +12,6 @@ import {
   Create,
   SimpleForm,
   TextInput,
-  NumberInput,
   SelectInput,
   PasswordInput,
   Filter,
@@ -26,7 +25,7 @@ const UserFilter = (props) => (
       source="status"
       choices={[
         { id: 1, name: 'Active' },
-        { id: 0, name: 'Inactive' },
+        { id: 0, name: 'Blocked' },
       ]}
     />
   </Filter>
@@ -34,7 +33,7 @@ const UserFilter = (props) => (
 
 const StatusField = () => {
   const record = useRecordContext();
-  return <span>{record?.status === 1 ? 'Active' : 'Inactive'}</span>;
+  return <span>{record?.status === 1 ? 'Active' : 'Blocked'}</span>;
 };
 
 export const UserList = () => (
@@ -42,9 +41,8 @@ export const UserList = () => (
     <Datagrid rowClick="edit">
       <NumberField source="id" />
       <EmailField source="email" />
-      <TextField source="name" />
-      <TextField source="surname" />
-      <TextField source="phone" />
+      <TextField source="first_name" label="First Name" />
+      <TextField source="last_name" label="Last Name" />
       <StatusField source="status" label="Status" />
       <DateField source="created_date" label="Created" />
       <EditButton />
@@ -59,15 +57,14 @@ export const UserEdit = () => (
       <TextInput source="id" disabled />
       <TextInput source="email" type="email" fullWidth required />
       <PasswordInput source="password" label="New Password (leave empty to keep current)" fullWidth />
-      <TextInput source="name" fullWidth />
-      <TextInput source="surname" fullWidth />
-      <TextInput source="phone" fullWidth />
-      <NumberInput source="membership_id" label="Membership ID" />
+      <TextInput source="user_name" label="Username" fullWidth />
+      <TextInput source="first_name" label="First Name" fullWidth />
+      <TextInput source="last_name" label="Last Name" fullWidth />
       <SelectInput
         source="status"
         choices={[
           { id: 1, name: 'Active' },
-          { id: 0, name: 'Inactive' },
+          { id: 0, name: 'Blocked' },
         ]}
       />
     </SimpleForm>
@@ -79,19 +76,17 @@ export const UserCreate = () => (
     <SimpleForm>
       <TextInput source="email" type="email" fullWidth required />
       <PasswordInput source="password" fullWidth required />
-      <TextInput source="name" fullWidth />
-      <TextInput source="surname" fullWidth />
-      <TextInput source="phone" fullWidth />
-      <NumberInput source="membership_id" label="Membership ID" />
+      <TextInput source="user_name" label="Username" fullWidth />
+      <TextInput source="first_name" label="First Name" fullWidth />
+      <TextInput source="last_name" label="Last Name" fullWidth />
       <SelectInput
         source="status"
         choices={[
           { id: 1, name: 'Active' },
-          { id: 0, name: 'Inactive' },
+          { id: 0, name: 'Blocked' },
         ]}
         defaultValue={1}
       />
     </SimpleForm>
   </Create>
 );
-

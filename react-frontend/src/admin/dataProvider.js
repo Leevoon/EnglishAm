@@ -54,16 +54,16 @@ const dataProvider = {
   // Get multiple records by ids
   getMany: async (resource, params) => {
     const query = {
-      ids: JSON.stringify(params.ids),
+      filter: JSON.stringify({ ids: JSON.stringify(params.ids) }),
     };
-    
+
     const queryString = Object.keys(query)
       .map(key => `${key}=${encodeURIComponent(query[key])}`)
       .join('&');
-    
+
     const url = `${ADMIN_API_URL}/${resource}?${queryString}`;
     const { json } = await httpClient(url);
-    
+
     return { data: json.data || json };
   },
 
