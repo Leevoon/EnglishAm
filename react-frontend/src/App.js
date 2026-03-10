@@ -19,6 +19,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import NotFound from './pages/NotFound';
 import AccountPage from './pages/AccountPage';
+import FaqPage from './pages/FaqPage';
 
 // Test Pages
 import TestListPage from './pages/TestListPage';
@@ -65,6 +66,7 @@ const MainSiteRoutes = () => (
     <Route path="/news" element={<MainLayout><NewsPage /></MainLayout>} />
     <Route path="/gallery" element={<MainLayout><GalleryPage /></MainLayout>} />
     <Route path="/lessons" element={<MainLayout><LessonsPage /></MainLayout>} />
+    <Route path="/faq" element={<MainLayout><FaqPage /></MainLayout>} />
 
     {/* ========== AUTH PAGES ========== */}
     <Route path="/login" element={<MainLayout><Login /></MainLayout>} />

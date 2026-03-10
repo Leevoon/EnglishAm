@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { categoriesAPI } from '../services/api';
+import { categoriesAPI, settingsAPI } from '../services/api';
 
 const AppContext = createContext();
 
@@ -14,13 +14,16 @@ export const useApp = () => {
 export const AppProvider = ({ children }) => {
   const [categories, setCategories] = useState([]);
   const [testCategories, setTestCategories] = useState([]);
-  const [currentLanguage, setCurrentLanguage] = useState({ 
-    id: 1, 
-    name: 'English', 
+  const [currentLanguage, setCurrentLanguage] = useState({
+    id: 1,
+    name: 'English',
     code: 'en',
     flag: '🇬🇧'
   });
   const [loading, setLoading] = useState(true);
+  const [translations, setTranslations] = useState({});
+  const [settings, setSettings] = useState(null);
+  const [socials, setSocials] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,7 +37,7 @@ export const AppProvider = ({ children }) => {
       } finally {
         setLoading(false);
       }
-      
+
       try {
         const response = await categoriesAPI.getTestCategoriesForMenu(currentLanguage.id);
         setTestCategories(response.data || []);
@@ -42,10 +45,38 @@ export const AppProvider = ({ children }) => {
         console.error('Error loading test categories:', error);
         setTestCategories([]);
       }
+
+      // Load translations
+      try {
+        const response = await settingsAPI.getTranslations(currentLanguage.id);
+        setTranslations(response.data || {});
+      } catch (error) {
+        console.error('Error loading translations:', error);
+      }
     };
-    
+
     fetchData();
   }, [currentLanguage.id]);
+
+  // Load settings and socials once on mount
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const response = await settingsAPI.getSettings();
+        setSettings(response.data || null);
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      }
+
+      try {
+        const response = await settingsAPI.getSocials();
+        setSocials(response.data || []);
+      } catch (error) {
+        console.error('Error loading socials:', error);
+      }
+    };
+    loadSettings();
+  }, []);
 
   const reloadCategories = async () => {
     try {
@@ -62,7 +93,6 @@ export const AppProvider = ({ children }) => {
 
   const changeLanguage = (language) => {
     setCurrentLanguage(language);
-    // Optionally store in localStorage
     localStorage.setItem('language', JSON.stringify(language));
   };
 
@@ -78,13 +108,20 @@ export const AppProvider = ({ children }) => {
     }
   }, []);
 
+  // Translation helper function
+  const t = (key) => translations[key] || key;
+
   const value = {
     categories,
     testCategories,
     currentLanguage,
     setCurrentLanguage: changeLanguage,
     loading,
-    reloadCategories
+    reloadCategories,
+    translations,
+    t,
+    settings,
+    socials
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

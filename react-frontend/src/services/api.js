@@ -49,30 +49,31 @@ export const testsAPI = {
 
 // TOEFL API
 export const toeflAPI = {
-  getReading: () => api.get('/toefl/reading'),
-  getListening: () => api.get('/toefl/listening'),
-  getSpeaking: () => api.get('/toefl/speaking'),
-  getWriting: () => api.get('/toefl/writing'),
-  getComplete: () => api.get('/toefl/complete'),
-  getSection: (section, id) => api.get(`/toefl/${section}/${id}`),
+  getReading: (languageId = 1) => api.get(`/toefl/reading?languageId=${languageId}`),
+  getListening: (languageId = 1) => api.get(`/toefl/listening?languageId=${languageId}`),
+  getSpeaking: (languageId = 1) => api.get(`/toefl/speaking?languageId=${languageId}`),
+  getWriting: (languageId = 1) => api.get(`/toefl/writing?languageId=${languageId}`),
+  getComplete: (languageId = 1) => api.get(`/toefl/complete?languageId=${languageId}`),
+  getSection: (section, id, languageId = 1) => api.get(`/toefl/${section}/${id}?languageId=${languageId}`),
   submitSection: (section, id, answers) => api.post(`/toefl/${section}/${id}/submit`, { answers })
 };
 
 // IELTS API
 export const ieltsAPI = {
-  getReading: () => api.get('/ielts/reading'),
-  getListening: () => api.get('/ielts/listening'),
-  getSpeaking: () => api.get('/ielts/speaking'),
-  getWriting: () => api.get('/ielts/writing'),
-  getComplete: () => api.get('/ielts/complete'),
-  getSection: (section, id) => api.get(`/ielts/${section}/${id}`),
+  getReading: (languageId = 1) => api.get(`/ielts/reading?languageId=${languageId}`),
+  getListening: (languageId = 1) => api.get(`/ielts/listening?languageId=${languageId}`),
+  getSpeaking: (languageId = 1) => api.get(`/ielts/speaking?languageId=${languageId}`),
+  getWriting: (languageId = 1) => api.get(`/ielts/writing?languageId=${languageId}`),
+  getComplete: (languageId = 1) => api.get(`/ielts/complete?languageId=${languageId}`),
+  getSection: (section, id, languageId = 1) => api.get(`/ielts/${section}/${id}?languageId=${languageId}`),
   submitSection: (section, id, answers) => api.post(`/ielts/${section}/${id}/submit`, { answers })
 };
 
 // Content API
 export const contentAPI = {
   getAbout: (languageId = 1) => api.get(`/content/about?languageId=${languageId}`),
-  getContact: (languageId = 1) => api.get(`/content/contact?languageId=${languageId}`)
+  getContact: (languageId = 1) => api.get(`/content/contact?languageId=${languageId}`),
+  sendContact: (data) => api.post('/content/contact/send', data)
 };
 
 // Ads API
@@ -87,7 +88,7 @@ export const authAPI = {
   logout: () => api.post('/auth/logout'),
   getMe: () => api.get('/auth/me'),
   guestLogin: () => api.post('/auth/guest'),
-  changePassword: (currentPassword, newPassword) => 
+  changePassword: (currentPassword, newPassword) =>
     api.post('/auth/change-password', { currentPassword, newPassword })
 };
 
@@ -101,6 +102,33 @@ export const homeAPI = {
   getNews: (languageId = 1, limit = 3) => api.get(`/home/news?languageId=${languageId}&limit=${limit}`),
   getGallery: (limit = 6) => api.get(`/home/gallery?limit=${limit}`),
   getPageImages: (keys) => api.get(`/home/page-images${keys ? `?keys=${keys}` : ''}`)
+};
+
+// FAQ API
+export const faqAPI = {
+  getAll: (languageId = 1) => api.get(`/faq?languageId=${languageId}`),
+  // Also available via home route for homepage section
+  getForHome: (languageId = 1) => api.get(`/home/faq?languageId=${languageId}`)
+};
+
+// Settings API
+export const settingsAPI = {
+  getSettings: () => api.get('/settings'),
+  getSocials: () => api.get('/socials'),
+  getTranslations: (languageId = 1) => api.get(`/translations?languageId=${languageId}`)
+};
+
+// Lessons API
+export const lessonsAPI = {
+  getAll: (params) => {
+    const queryString = new URLSearchParams(params).toString();
+    return api.get(`/lessons?${queryString}`);
+  }
+};
+
+// Trainings API
+export const trainingsAPI = {
+  getAll: (languageId = 1) => api.get(`/trainings?languageId=${languageId}`)
 };
 
 export default api;

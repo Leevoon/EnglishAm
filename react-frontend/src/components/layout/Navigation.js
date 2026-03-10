@@ -87,6 +87,11 @@ const Navigation = () => {
       label: 'Lessons',
       path: '/lessons',
       type: 'link'
+    },
+    {
+      label: 'FAQ',
+      path: '/faq',
+      type: 'link'
     }
   ];
 
