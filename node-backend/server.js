@@ -31,7 +31,11 @@ if (useMock) {
   app.use('/api/ads', require('./routes/ads'));
   app.use('/api/auth', require('./routes/auth'));
   app.use('/api/home', require('./routes/home'));
-  
+  app.use('/api/faq', require('./routes/faq'));
+  app.use('/api/lessons', require('./routes/lessons'));
+  app.use('/api/trainings', require('./routes/trainings'));
+  app.use('/api/settings', require('./routes/settings'));
+
   // Admin routes
   app.use('/api/admin', require('./routes/admin'));
 }
