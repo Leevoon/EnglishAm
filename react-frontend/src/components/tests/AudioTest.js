@@ -57,7 +57,7 @@ const AudioTest = ({ test, onAnswerChange, selectedAnswer }) => {
       
       <div className="test-question">
         <h5>Question:</h5>
-        <p>{test.question || 'No question text available'}</p>
+        <div dangerouslySetInnerHTML={{ __html: test.question || 'No question text available' }} />
       </div>
 
       {test.answers && test.answers.length > 0 && (
@@ -76,7 +76,7 @@ const AudioTest = ({ test, onAnswerChange, selectedAnswer }) => {
                   checked={selectedAnswer === answer.id}
                   onChange={() => handleAnswerSelect(answer.id)}
                 />
-                <span className="answer-text">{answer.value || answer.text}</span>
+                <span className="answer-text" dangerouslySetInnerHTML={{ __html: answer.value || answer.text }} />
               </label>
             ))}
           </div>

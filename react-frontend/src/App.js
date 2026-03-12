@@ -114,7 +114,9 @@ const MainSiteRoutes = () => (
 
     {/* ========== TOEFL ========== */}
     <Route path="/toefl/reading" element={<MainLayout><ToeflReading /></MainLayout>} />
+    <Route path="/toefl/reading/:testId" element={<MainLayout><ToeflReading /></MainLayout>} />
     <Route path="/toefl/listening" element={<MainLayout><ToeflListening /></MainLayout>} />
+    <Route path="/toefl/listening/:testId" element={<MainLayout><ToeflListening /></MainLayout>} />
     <Route path="/toefl/speaking" element={<MainLayout><ToeflSpeaking /></MainLayout>} />
     <Route path="/toefl/writing" element={<MainLayout><ToeflWriting /></MainLayout>} />
     <Route path="/toefl/writing/integrated" element={<MainLayout><ToeflWriting /></MainLayout>} />
@@ -123,14 +125,18 @@ const MainSiteRoutes = () => (
 
     {/* ========== IELTS GENERAL ========== */}
     <Route path="/ielts/general/reading" element={<MainLayout><IeltsReading /></MainLayout>} />
+    <Route path="/ielts/general/reading/:testId" element={<MainLayout><IeltsReading /></MainLayout>} />
     <Route path="/ielts/general/listening" element={<MainLayout><IeltsListening /></MainLayout>} />
+    <Route path="/ielts/general/listening/:testId" element={<MainLayout><IeltsListening /></MainLayout>} />
     <Route path="/ielts/general/speaking" element={<MainLayout><IeltsSpeaking /></MainLayout>} />
     <Route path="/ielts/general/writing" element={<MainLayout><IeltsWriting /></MainLayout>} />
     <Route path="/ielts/general/complete" element={<MainLayout><IeltsComplete /></MainLayout>} />
 
     {/* ========== IELTS ACADEMIC ========== */}
     <Route path="/ielts/academic/reading" element={<MainLayout><IeltsReading /></MainLayout>} />
+    <Route path="/ielts/academic/reading/:testId" element={<MainLayout><IeltsReading /></MainLayout>} />
     <Route path="/ielts/academic/listening" element={<MainLayout><IeltsListening /></MainLayout>} />
+    <Route path="/ielts/academic/listening/:testId" element={<MainLayout><IeltsListening /></MainLayout>} />
     <Route path="/ielts/academic/speaking" element={<MainLayout><IeltsSpeaking /></MainLayout>} />
     <Route path="/ielts/academic/writing" element={<MainLayout><IeltsWriting /></MainLayout>} />
     <Route path="/ielts/academic/complete" element={<MainLayout><IeltsComplete /></MainLayout>} />

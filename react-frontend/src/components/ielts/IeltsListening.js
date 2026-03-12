@@ -1,15 +1,31 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ieltsAPI } from '../../services/api';
 import './IeltsSection.css';
 
 const IeltsListening = () => {
+  const { testId } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [tests, setTests] = useState([]);
   const [selectedTest, setSelectedTest] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const basePath = location.pathname.includes('/ielts/academic/')
+    ? '/ielts/academic/listening'
+    : '/ielts/general/listening';
+
   useEffect(() => {
     loadTests();
   }, []);
+
+  useEffect(() => {
+    if (testId) {
+      loadTest(testId);
+    } else {
+      setSelectedTest(null);
+    }
+  }, [testId]);
 
   const loadTests = async () => {
     try {
@@ -23,13 +39,21 @@ const IeltsListening = () => {
     }
   };
 
-  const handleTestSelect = async (testId) => {
+  const loadTest = async (id) => {
     try {
-      const response = await ieltsAPI.getSection('listening', testId);
+      const response = await ieltsAPI.getSection('listening', id);
       setSelectedTest(response.data);
     } catch (error) {
       console.error('Error loading test:', error);
     }
+  };
+
+  const handleTestSelect = (id) => {
+    navigate(`${basePath}/${id}`);
+  };
+
+  const handleBack = () => {
+    navigate(basePath);
   };
 
   if (loading) {
@@ -50,12 +74,12 @@ const IeltsListening = () => {
                 <h3>Questions</h3>
                 {selectedTest.questions.map((question, index) => (
                   <div key={question.id || index} className="question-item">
-                    <p>{question.text || `Question ${index + 1}`}</p>
+                    <div dangerouslySetInnerHTML={{ __html: question.text || `Question ${index + 1}` }} />
                   </div>
                 ))}
               </div>
             )}
-            <button onClick={() => setSelectedTest(null)} className="btn btn-secondary">
+            <button onClick={handleBack} className="btn btn-secondary">
               Back to Test List
             </button>
           </div>
@@ -89,6 +113,3 @@ const IeltsListening = () => {
 };
 
 export default IeltsListening;
-
-
-

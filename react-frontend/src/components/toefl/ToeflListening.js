@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { toeflAPI } from '../../services/api';
 import './ToeflSection.css';
 
 const ToeflListening = () => {
+  const { testId } = useParams();
+  const navigate = useNavigate();
   const [tests, setTests] = useState([]);
   const [selectedTest, setSelectedTest] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -10,6 +13,14 @@ const ToeflListening = () => {
   useEffect(() => {
     loadTests();
   }, []);
+
+  useEffect(() => {
+    if (testId) {
+      loadTest(testId);
+    } else {
+      setSelectedTest(null);
+    }
+  }, [testId]);
 
   const loadTests = async () => {
     try {
@@ -23,13 +34,21 @@ const ToeflListening = () => {
     }
   };
 
-  const handleTestSelect = async (testId) => {
+  const loadTest = async (id) => {
     try {
-      const response = await toeflAPI.getSection('listening', testId);
+      const response = await toeflAPI.getSection('listening', id);
       setSelectedTest(response.data);
     } catch (error) {
       console.error('Error loading test:', error);
     }
+  };
+
+  const handleTestSelect = (id) => {
+    navigate(`/toefl/listening/${id}`);
+  };
+
+  const handleBack = () => {
+    navigate('/toefl/listening');
   };
 
   if (loading) {
@@ -50,12 +69,12 @@ const ToeflListening = () => {
                 <h3>Questions</h3>
                 {selectedTest.questions.map((question, index) => (
                   <div key={question.id || index} className="question-item">
-                    <p>{question.text || `Question ${index + 1}`}</p>
+                    <div dangerouslySetInnerHTML={{ __html: question.text || `Question ${index + 1}` }} />
                   </div>
                 ))}
               </div>
             )}
-            <button onClick={() => setSelectedTest(null)} className="btn btn-secondary">
+            <button onClick={handleBack} className="btn btn-secondary">
               Back to Test List
             </button>
           </div>
@@ -89,6 +108,3 @@ const ToeflListening = () => {
 };
 
 export default ToeflListening;
-
-
-
