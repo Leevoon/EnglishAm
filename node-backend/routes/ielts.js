@@ -9,7 +9,7 @@ const DEFAULT_LANGUAGE_ID = 1;
 router.get('/reading', async (req, res) => {
   try {
     const [results] = await sequelize.query(`
-      SELECT ir.*, irl.name 
+      SELECT ir.*, irl.name
       FROM ielts_reading ir
       LEFT JOIN ielts_reading_label irl ON ir.id = irl.ielts_reading_id AND irl.language_id = ${DEFAULT_LANGUAGE_ID}
       WHERE ir.status = 1
@@ -26,7 +26,7 @@ router.get('/reading', async (req, res) => {
 router.get('/listening', async (req, res) => {
   try {
     const [results] = await sequelize.query(`
-      SELECT il.*, ill.name 
+      SELECT il.*, ill.name
       FROM ielts_listening il
       LEFT JOIN ielts_listening_label ill ON il.id = ill.ielts_listening_id AND ill.language_id = ${DEFAULT_LANGUAGE_ID}
       WHERE il.status = 1
@@ -43,7 +43,7 @@ router.get('/listening', async (req, res) => {
 router.get('/speaking', async (req, res) => {
   try {
     const [results] = await sequelize.query(`
-      SELECT isp.*, isl.name 
+      SELECT isp.*, isl.name
       FROM ielts_speaking isp
       LEFT JOIN ielts_speaking_label isl ON isp.id = isl.ielts_speaking_id AND isl.language_id = ${DEFAULT_LANGUAGE_ID}
       WHERE isp.status = 1
@@ -60,7 +60,7 @@ router.get('/speaking', async (req, res) => {
 router.get('/writing', async (req, res) => {
   try {
     const [results] = await sequelize.query(`
-      SELECT iw.*, iwl.name 
+      SELECT iw.*, iwl.name
       FROM ielts_writing iw
       LEFT JOIN ielts_writing_label iwl ON iw.id = iwl.ielts_writing_id AND iwl.language_id = ${DEFAULT_LANGUAGE_ID}
       WHERE iw.status = 1
@@ -110,30 +110,71 @@ router.get('/:section/:id', async (req, res) => {
     }
 
     const [results] = await sequelize.query(`
-      SELECT * FROM ${tableName} WHERE id = ${id} AND status = 1
-    `);
+      SELECT * FROM ${tableName} WHERE id = :id AND status = 1
+    `, { replacements: { id } });
 
     if (!results || results.length === 0) {
       return res.status(404).json({ error: 'Test not found' });
     }
 
-    // Get related questions based on section
-    let questions = [];
     if (section === 'reading') {
-      const [readingTests] = await sequelize.query(`
-        SELECT * FROM ielts_reading_test WHERE ielts_reading_id = ${id} AND status = 1 ORDER BY sort_order ASC
-      `);
-      questions = readingTests;
+      // Get reading passages
+      const [passages] = await sequelize.query(`
+        SELECT * FROM ielts_reading_test
+        WHERE ielts_reading_id = :id AND status = 1
+        ORDER BY sort_order ASC
+      `, { replacements: { id } });
+
+      // Get questions (linked directly to ielts_reading, not to ielts_reading_test)
+      const [questions] = await sequelize.query(`
+        SELECT * FROM ielts_reading_question
+        WHERE ielts_reading_id = :id
+        ORDER BY sort_order ASC
+      `, { replacements: { id } });
+
+      // For each question, get answers
+      for (const question of questions) {
+        const [answers] = await sequelize.query(`
+          SELECT id, ielts_reading_question_id, answer, true_false
+          FROM ielts_reading_question_answer
+          WHERE ielts_reading_question_id = :questionId
+        `, { replacements: { questionId: question.id } });
+        question.answers = answers;
+      }
+
+      return res.json({
+        test: results[0],
+        passages,
+        questions
+      });
     } else if (section === 'listening') {
-      const [listeningTests] = await sequelize.query(`
-        SELECT * FROM ielts_listening_question WHERE ielts_listening_id = ${id} AND status = 1 ORDER BY sort_order ASC
-      `);
-      questions = listeningTests;
+      // Get questions (linked directly to ielts_listening)
+      const [questions] = await sequelize.query(`
+        SELECT * FROM ielts_listening_question
+        WHERE ielts_listening_id = :id
+        ORDER BY sort_order ASC
+      `, { replacements: { id } });
+
+      // For each question, get answers
+      for (const question of questions) {
+        const [answers] = await sequelize.query(`
+          SELECT id, ielts_listening_question_id, answer, true_false
+          FROM ielts_listening_question_answer
+          WHERE ielts_listening_question_id = :questionId
+        `, { replacements: { questionId: question.id } });
+        question.answers = answers;
+      }
+
+      return res.json({
+        test: results[0],
+        questions
+      });
     }
 
+    // Fallback for speaking/writing
     res.json({
       test: results[0],
-      questions
+      questions: []
     });
   } catch (error) {
     console.error(`Error fetching IELTS ${req.params.section} test:`, error);
@@ -147,13 +188,59 @@ router.post('/:section/:id/submit', async (req, res) => {
     const { section, id } = req.params;
     const { answers } = req.body;
 
-    // Process answers and calculate score
-    // This would need to be implemented based on specific test structure
-    
+    if (!answers || typeof answers !== 'object') {
+      return res.status(400).json({ error: 'Answers are required' });
+    }
+
+    let correctCount = 0;
+    let incorrectCount = 0;
+    const results = {};
+
+    if (section === 'reading') {
+      for (const [questionId, selectedAnswerId] of Object.entries(answers)) {
+        const [correctAnswers] = await sequelize.query(`
+          SELECT id, true_false FROM ielts_reading_question_answer
+          WHERE ielts_reading_question_id = :questionId
+        `, { replacements: { questionId } });
+
+        const correctAnswer = correctAnswers.find(a => a.true_false === 1);
+        const isCorrect = correctAnswer && String(correctAnswer.id) === String(selectedAnswerId);
+
+        if (isCorrect) correctCount++;
+        else incorrectCount++;
+
+        results[questionId] = {
+          selected: selectedAnswerId,
+          correct: correctAnswer ? correctAnswer.id : null,
+          isCorrect
+        };
+      }
+    } else if (section === 'listening') {
+      for (const [questionId, selectedAnswerId] of Object.entries(answers)) {
+        const [correctAnswers] = await sequelize.query(`
+          SELECT id, true_false FROM ielts_listening_question_answer
+          WHERE ielts_listening_question_id = :questionId
+        `, { replacements: { questionId } });
+
+        const correctAnswer = correctAnswers.find(a => a.true_false === 1);
+        const isCorrect = correctAnswer && String(correctAnswer.id) === String(selectedAnswerId);
+
+        if (isCorrect) correctCount++;
+        else incorrectCount++;
+
+        results[questionId] = {
+          selected: selectedAnswerId,
+          correct: correctAnswer ? correctAnswer.id : null,
+          isCorrect
+        };
+      }
+    }
+
     res.json({
-      message: 'Test submitted successfully',
-      section,
-      testId: id
+      correct: correctCount,
+      incorrect: incorrectCount,
+      total: correctCount + incorrectCount,
+      results
     });
   } catch (error) {
     console.error('Error submitting IELTS test:', error);
@@ -162,6 +249,3 @@ router.post('/:section/:id/submit', async (req, res) => {
 });
 
 module.exports = router;
-
-
-
