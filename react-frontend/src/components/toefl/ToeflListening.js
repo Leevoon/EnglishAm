@@ -1,10 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toeflAPI } from '../../services/api';
 import './ToeflSection.css';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 const MEDIA_BASE = process.env.REACT_APP_MEDIA_URL || '';
+const TEST_DURATION = 60 * 60;
+
+const formatTime = (seconds) => {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+};
 
 const ToeflListening = () => {
   const { testId } = useParams();
@@ -12,26 +19,62 @@ const ToeflListening = () => {
   const [tests, setTests] = useState([]);
   const [selectedTest, setSelectedTest] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activePart, setActivePart] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [results, setResults] = useState(null);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(TEST_DURATION);
+  const timerRef = useRef(null);
 
   useEffect(() => {
     loadTests();
   }, []);
+
+  const handleSubmit = useCallback(async (answers) => {
+    try {
+      if (timerRef.current) clearInterval(timerRef.current);
+      const response = await toeflAPI.submitSection('listening', testId, answers || selectedAnswers);
+      setResults(response.data);
+      setSubmitted(true);
+    } catch (error) {
+      console.error('Error submitting test:', error);
+    }
+  }, [testId, selectedAnswers]);
 
   useEffect(() => {
     if (testId) {
       loadTest(testId);
     } else {
       setSelectedTest(null);
-      setActivePart(0);
       setSelectedAnswers({});
       setSubmitted(false);
       setResults(null);
+      setCurrentQuestion(0);
+      setTimeLeft(TEST_DURATION);
+      if (timerRef.current) clearInterval(timerRef.current);
     }
   }, [testId]);
+
+  useEffect(() => {
+    if (selectedTest && !submitted) {
+      timerRef.current = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            clearInterval(timerRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timerRef.current);
+    }
+  }, [selectedTest, submitted]);
+
+  useEffect(() => {
+    if (timeLeft === 0 && !submitted && selectedTest) {
+      handleSubmit(selectedAnswers);
+    }
+  }, [timeLeft, submitted, selectedTest, handleSubmit, selectedAnswers]);
 
   const loadTests = async () => {
     try {
@@ -50,6 +93,11 @@ const ToeflListening = () => {
       setLoading(true);
       const response = await toeflAPI.getSection('listening', id);
       setSelectedTest(response.data);
+      setTimeLeft(TEST_DURATION);
+      setCurrentQuestion(0);
+      setSelectedAnswers({});
+      setSubmitted(false);
+      setResults(null);
     } catch (error) {
       console.error('Error loading test:', error);
     } finally {
@@ -62,6 +110,7 @@ const ToeflListening = () => {
   };
 
   const handleBack = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
     navigate('/toefl/listening');
   };
 
@@ -70,25 +119,25 @@ const ToeflListening = () => {
     setSelectedAnswers(prev => ({ ...prev, [questionId]: answerId }));
   };
 
-  const handleSubmit = async () => {
-    try {
-      const response = await toeflAPI.submitSection('listening', testId, selectedAnswers);
-      setResults(response.data);
-      setSubmitted(true);
-    } catch (error) {
-      console.error('Error submitting test:', error);
-    }
-  };
-
   const getAllQuestions = () => {
     if (!selectedTest?.parts) return [];
     const questions = [];
     selectedTest.parts.forEach(part => {
       if (part.questions) {
-        part.questions.forEach(q => questions.push(q));
+        part.questions.forEach(q => ({ ...q, _part: part }));
+        part.questions.forEach(q => questions.push({ ...q, _part: part }));
       }
     });
     return questions;
+  };
+
+  const handleNext = () => {
+    const allQuestions = getAllQuestions();
+    if (currentQuestion < allQuestions.length - 1) {
+      setCurrentQuestion(prev => prev + 1);
+    } else {
+      handleSubmit(selectedAnswers);
+    }
   };
 
   if (loading) {
@@ -96,135 +145,132 @@ const ToeflListening = () => {
   }
 
   if (selectedTest && selectedTest.parts) {
-    const parts = selectedTest.parts;
-    const currentPart = parts[activePart];
     const allQuestions = getAllQuestions();
-    const answeredCount = Object.keys(selectedAnswers).length;
+    const isTimeLow = timeLeft <= 300;
 
-    return (
-      <div className="toefl-section">
-        <div className="container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
-            <h2 style={{ margin: 0 }}>TOEFL Listening</h2>
-            <button onClick={handleBack} className="btn btn-secondary">
-              Back to List
-            </button>
-          </div>
-
-          {submitted && results && (
+    if (submitted && results) {
+      return (
+        <div className="toefl-section">
+          <div className="container">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+              <h2 style={{ margin: 0 }}>TOEFL Listening - Results</h2>
+              <button onClick={handleBack} className="btn btn-secondary">Back to List</button>
+            </div>
             <div className="results-summary">
               <h3>Results</h3>
-              <div className="score-display">
-                {results.correct} / {results.total}
-              </div>
+              <div className="score-display">{results.correct} / {results.total}</div>
               <div className="score-details">
                 <span className="score-correct">Correct: {results.correct}</span>
                 <span className="score-incorrect">Incorrect: {results.incorrect}</span>
               </div>
             </div>
-          )}
+            <div className="listening-layout">
+              {allQuestions.map((q, qIndex) => {
+                const qResult = results.results?.[q.id];
+                return (
+                  <div key={q.id} className={`question-item ${qResult?.isCorrect ? 'correct' : 'incorrect'}`}>
+                    <div className="question-number">Question {qIndex + 1}</div>
+                    <div className="question-text" dangerouslySetInnerHTML={{ __html: q.question }} />
+                    {q.answers && (
+                      <div className="answer-options">
+                        {q.answers.map((answer, aIndex) => {
+                          const isSelected = String(selectedAnswers[q.id]) === String(answer.id);
+                          let cls = 'answer-option disabled';
+                          if (answer.true_false === 1) cls += ' correct-answer';
+                          else if (isSelected) cls += ' wrong-answer';
+                          return (
+                            <div key={answer.id} className={cls}>
+                              <span className="answer-letter">{LETTERS[aIndex]}</span>
+                              <span className="answer-text">{answer.value}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const question = allQuestions[currentQuestion];
+    const isLastQuestion = currentQuestion === allQuestions.length - 1;
+
+    return (
+      <div className="toefl-section">
+        <div className="container">
+          <div className="test-header">
+            <h2 style={{ margin: 0 }}>TOEFL Listening</h2>
+            <div className="test-header-right">
+              <div className={`timer ${isTimeLow ? 'timer-low' : ''}`}>{formatTime(timeLeft)}</div>
+              <span className="question-counter">Question {currentQuestion + 1} / {allQuestions.length}</span>
+            </div>
+          </div>
 
           <div className="listening-layout">
-            {parts.length > 1 && (
-              <div className="part-selector">
-                {parts.map((part, idx) => (
-                  <button
-                    key={part.id}
-                    className={`btn ${activePart === idx ? 'btn-primary active' : 'btn-secondary'}`}
-                    onClick={() => setActivePart(idx)}
-                  >
-                    Part {idx + 1}
-                  </button>
-                ))}
+            {question && question._part && (
+              <div className="audio-player-section">
+                {question._part.image && (
+                  <img src={`${MEDIA_BASE}/uploads/toefl/${question._part.image}`} alt="Listening" />
+                )}
+                {question._part.audio && (
+                  <audio controls>
+                    <source src={`${MEDIA_BASE}/uploads/toefl/${question._part.audio}`} type="audio/mpeg" />
+                    Your browser does not support the audio element.
+                  </audio>
+                )}
               </div>
             )}
 
-            {currentPart && (
-              <>
-                <div className="audio-player-section">
-                  {currentPart.image && (
-                    <img src={`${MEDIA_BASE}/uploads/toefl/${currentPart.image}`} alt="Listening" />
+            {question && (
+              <div className="single-question-view">
+                <div className="question-item">
+                  <div className="question-number">Question {currentQuestion + 1}</div>
+                  <div className="question-text" dangerouslySetInnerHTML={{ __html: question.question }} />
+
+                  {question.audio && (
+                    <div style={{ marginBottom: 10 }}>
+                      <audio controls style={{ width: '100%', maxWidth: 400 }}>
+                        <source src={`${MEDIA_BASE}/uploads/toefl/${question.audio}`} type="audio/mpeg" />
+                      </audio>
+                    </div>
                   )}
-                  {currentPart.audio && (
-                    <audio controls>
-                      <source src={`${MEDIA_BASE}/uploads/toefl/${currentPart.audio}`} type="audio/mpeg" />
-                      Your browser does not support the audio element.
-                    </audio>
+
+                  {question.answers && question.answers.length > 0 && (
+                    <div className="answer-options">
+                      {question.answers.map((answer, aIndex) => {
+                        const isSelected = selectedAnswers[question.id] === answer.id;
+                        let optionClass = 'answer-option';
+                        if (isSelected) optionClass += ' selected';
+
+                        return (
+                          <div
+                            key={answer.id}
+                            className={optionClass}
+                            onClick={() => handleAnswerSelect(question.id, answer.id)}
+                          >
+                            <span className="answer-letter">{LETTERS[aIndex]}</span>
+                            <span className="answer-text">{answer.value}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
 
-                {currentPart.questions && currentPart.questions.length > 0 && (
-                  <div>
-                    <h3>Questions</h3>
-                    {currentPart.questions.map((question, qIndex) => {
-                      const questionResult = submitted ? results?.results?.[question.id] : null;
-                      let qClass = 'question-item';
-                      if (questionResult) {
-                        qClass += questionResult.isCorrect ? ' correct' : ' incorrect';
-                      } else if (selectedAnswers[question.id]) {
-                        qClass += ' answered';
-                      }
-
-                      return (
-                        <div key={question.id} className={qClass}>
-                          <div className="question-number">Question {qIndex + 1}</div>
-                          <div className="question-text" dangerouslySetInnerHTML={{ __html: question.question }} />
-
-                          {question.audio && (
-                            <div style={{ marginBottom: 10 }}>
-                              <audio controls style={{ width: '100%', maxWidth: 400 }}>
-                                <source src={`${MEDIA_BASE}/uploads/toefl/${question.audio}`} type="audio/mpeg" />
-                              </audio>
-                            </div>
-                          )}
-
-                          {question.answers && question.answers.length > 0 && (
-                            <div className="answer-options">
-                              {question.answers.map((answer, aIndex) => {
-                                const isSelected = selectedAnswers[question.id] === answer.id;
-                                let optionClass = 'answer-option';
-                                if (submitted) {
-                                  optionClass += ' disabled';
-                                  if (answer.true_false === 1) {
-                                    optionClass += ' correct-answer';
-                                  } else if (isSelected && answer.true_false !== 1) {
-                                    optionClass += ' wrong-answer';
-                                  }
-                                } else {
-                                  if (isSelected) optionClass += ' selected';
-                                }
-
-                                return (
-                                  <div
-                                    key={answer.id}
-                                    className={optionClass}
-                                    onClick={() => handleAnswerSelect(question.id, answer.id)}
-                                  >
-                                    <span className="answer-letter">{LETTERS[aIndex]}</span>
-                                    <span className="answer-text">{answer.value}</span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </>
-            )}
-
-            {!submitted && allQuestions.length > 0 && (
-              <div className="test-actions">
-                <span>{answeredCount} of {allQuestions.length} answered</span>
-                <button
-                  className="btn btn-success"
-                  onClick={handleSubmit}
-                  disabled={answeredCount === 0}
-                >
-                  Submit Answers
-                </button>
+                <div className="test-actions">
+                  <div />
+                  <button
+                    className={`btn ${isLastQuestion ? 'btn-success' : 'btn-primary'}`}
+                    onClick={handleNext}
+                    disabled={!selectedAnswers[question.id]}
+                  >
+                    {isLastQuestion ? 'Submit' : 'Next'}
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -240,11 +286,7 @@ const ToeflListening = () => {
         <div className="tests-list">
           {tests.length > 0 ? (
             tests.map((test) => (
-              <div
-                key={test.id}
-                className="test-item"
-                onClick={() => handleTestSelect(test.id)}
-              >
+              <div key={test.id} className="test-item" onClick={() => handleTestSelect(test.id)}>
                 <h3>{test.name || `Test ${test.id}`}</h3>
               </div>
             ))
