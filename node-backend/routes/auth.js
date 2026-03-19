@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const { Op } = require('sequelize');
+const { getUserMembershipLevel } = require('../middleware/membershipAccess');
 
 // Simple session storage (in production, use Redis or database)
 const sessions = {};
@@ -63,6 +64,9 @@ router.post('/register', async (req, res) => {
       created_date: new Date()
     });
 
+    // Get membership level
+    const membership_level = await getUserMembershipLevel(newUser.id);
+
     // Generate session token
     const token = generateSessionToken();
     sessions[token] = {
@@ -73,7 +77,8 @@ router.post('/register', async (req, res) => {
         email: newUser.email,
         first_name: newUser.first_name,
         last_name: newUser.last_name,
-        avatar: newUser.avatar
+        avatar: newUser.avatar,
+        membership_level
       },
       createdAt: new Date()
     };
@@ -115,6 +120,9 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email/username or password' });
     }
 
+    // Get membership level
+    const membership_level = await getUserMembershipLevel(user.id);
+
     // Generate session token
     const token = generateSessionToken();
     sessions[token] = {
@@ -125,7 +133,8 @@ router.post('/login', async (req, res) => {
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name,
-        avatar: user.avatar
+        avatar: user.avatar,
+        membership_level
       },
       createdAt: new Date()
     };
@@ -157,6 +166,8 @@ router.post('/guest', async (req, res) => {
       return res.status(401).json({ error: 'Guest login not available' });
     }
 
+    const guest_membership_level = await getUserMembershipLevel(user.id);
+
     const token = generateSessionToken();
     sessions[token] = {
       userId: user.id,
@@ -166,7 +177,8 @@ router.post('/guest', async (req, res) => {
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name,
-        avatar: user.avatar
+        avatar: user.avatar,
+        membership_level: guest_membership_level
       },
       createdAt: new Date()
     };
@@ -192,12 +204,16 @@ router.post('/logout', (req, res) => {
 });
 
 // Get current user
-router.get('/me', (req, res) => {
+router.get('/me', async (req, res) => {
   const token = req.headers.authorization || req.query.token;
-  
+
   if (!token || !sessions[token]) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
+
+  // Refresh membership level
+  const membership_level = await getUserMembershipLevel(sessions[token].userId);
+  sessions[token].user.membership_level = membership_level;
 
   res.json({
     success: true,

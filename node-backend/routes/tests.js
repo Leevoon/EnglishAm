@@ -276,18 +276,30 @@ router.get('/history/:userId', async (req, res) => {
     const sequelize = require('../config/database');
 
     const [results] = await sequelize.query(`
-      SELECT 
+      SELECT
         uh.id,
         uh.test_id,
+        uh.test_type,
+        uh.section,
         uh.created_date,
         uh.duration,
         uh.score,
         uh.score_from,
-        tc.category_id,
-        tcl.name as test_name,
-        cl.value as category_name
+        CASE
+          WHEN uh.test_type = 'regular' THEN tcl.name
+          WHEN uh.test_type = 'toefl' THEN CONCAT('TOEFL ', UPPER(LEFT(uh.section, 1)), SUBSTRING(uh.section, 2))
+          WHEN uh.test_type = 'ielts' THEN CONCAT('IELTS ', UPPER(LEFT(uh.section, 1)), SUBSTRING(uh.section, 2))
+          ELSE 'Unknown'
+        END as test_name,
+        CASE
+          WHEN uh.test_type = 'regular' THEN cl.value
+          WHEN uh.test_type = 'toefl' THEN 'TOEFL'
+          WHEN uh.test_type = 'ielts' THEN 'IELTS'
+          ELSE uh.test_type
+        END as category_name,
+        CASE WHEN uh.test_type = 'regular' THEN tc.category_id ELSE NULL END as category_id
       FROM user_history uh
-      LEFT JOIN test_category tc ON uh.test_id = tc.id
+      LEFT JOIN test_category tc ON uh.test_id = tc.id AND uh.test_type = 'regular'
       LEFT JOIN test_category_label tcl ON tc.id = tcl.test_category_id AND tcl.language_id = :languageId
       LEFT JOIN category c ON tc.category_id = c.id
       LEFT JOIN category_label cl ON c.id = cl.category_id AND cl.language_id = :languageId

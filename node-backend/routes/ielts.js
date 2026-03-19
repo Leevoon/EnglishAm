@@ -2,11 +2,13 @@ const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
 const sequelize = require('../config/database');
+const optionalAuth = require('../middleware/optionalAuth');
+const { requireMembership, annotateListWithAccess, getRequiredLevel, getUserMembershipLevel } = require('../middleware/membershipAccess');
 
 const DEFAULT_LANGUAGE_ID = 1;
 
 // Helper to get IELTS Reading tests
-router.get('/reading', async (req, res) => {
+router.get('/reading', optionalAuth, async (req, res) => {
   try {
     const [results] = await sequelize.query(`
       SELECT ir.*, irl.name
@@ -15,7 +17,8 @@ router.get('/reading', async (req, res) => {
       WHERE ir.status = 1
       ORDER BY ir.sort_order ASC
     `);
-    res.json(results);
+    const annotated = await annotateListWithAccess(results, 'ielts_reading', req.userId);
+    res.json(annotated);
   } catch (error) {
     console.error('Error fetching IELTS reading tests:', error);
     res.status(500).json({ error: 'Failed to fetch IELTS reading tests' });
@@ -23,7 +26,7 @@ router.get('/reading', async (req, res) => {
 });
 
 // Helper to get IELTS Listening tests
-router.get('/listening', async (req, res) => {
+router.get('/listening', optionalAuth, async (req, res) => {
   try {
     const [results] = await sequelize.query(`
       SELECT il.*, ill.name
@@ -32,7 +35,8 @@ router.get('/listening', async (req, res) => {
       WHERE il.status = 1
       ORDER BY il.sort_order ASC
     `);
-    res.json(results);
+    const annotated = await annotateListWithAccess(results, 'ielts_listening', req.userId);
+    res.json(annotated);
   } catch (error) {
     console.error('Error fetching IELTS listening tests:', error);
     res.status(500).json({ error: 'Failed to fetch IELTS listening tests' });
@@ -40,7 +44,7 @@ router.get('/listening', async (req, res) => {
 });
 
 // Helper to get IELTS Speaking tests
-router.get('/speaking', async (req, res) => {
+router.get('/speaking', optionalAuth, async (req, res) => {
   try {
     const [results] = await sequelize.query(`
       SELECT isp.*, isl.name
@@ -49,7 +53,8 @@ router.get('/speaking', async (req, res) => {
       WHERE isp.status = 1
       ORDER BY isp.sort_order ASC
     `);
-    res.json(results);
+    const annotated = await annotateListWithAccess(results, 'ielts_speaking', req.userId);
+    res.json(annotated);
   } catch (error) {
     console.error('Error fetching IELTS speaking tests:', error);
     res.status(500).json({ error: 'Failed to fetch IELTS speaking tests' });
@@ -57,7 +62,7 @@ router.get('/speaking', async (req, res) => {
 });
 
 // Helper to get IELTS Writing tests
-router.get('/writing', async (req, res) => {
+router.get('/writing', optionalAuth, async (req, res) => {
   try {
     const [results] = await sequelize.query(`
       SELECT iw.*, iwl.name
@@ -66,7 +71,8 @@ router.get('/writing', async (req, res) => {
       WHERE iw.status = 1
       ORDER BY iw.sort_order ASC
     `);
-    res.json(results);
+    const annotated = await annotateListWithAccess(results, 'ielts_writing', req.userId);
+    res.json(annotated);
   } catch (error) {
     console.error('Error fetching IELTS writing tests:', error);
     res.status(500).json({ error: 'Failed to fetch IELTS writing tests' });
@@ -94,7 +100,7 @@ router.get('/complete', async (req, res) => {
 });
 
 // Get specific section test details
-router.get('/:section/:id', async (req, res) => {
+router.get('/:section/:id', optionalAuth, async (req, res) => {
   try {
     const { section, id } = req.params;
     const sectionMap = {
@@ -103,6 +109,21 @@ router.get('/:section/:id', async (req, res) => {
       speaking: 'ielts_speaking',
       writing: 'ielts_writing'
     };
+
+    // Check membership access
+    const contentType = `ielts_${section}`;
+    const requiredLevel = await getRequiredLevel(id, contentType);
+    if (requiredLevel > 0) {
+      const userLevel = await getUserMembershipLevel(req.userId);
+      if (userLevel < requiredLevel) {
+        return res.status(403).json({
+          error: 'Membership required',
+          required_level: requiredLevel,
+          user_level: userLevel,
+          message: 'Your membership level is not sufficient to access this content'
+        });
+      }
+    }
 
     const tableName = sectionMap[section];
     if (!tableName) {
@@ -183,10 +204,10 @@ router.get('/:section/:id', async (req, res) => {
 });
 
 // Submit test answers
-router.post('/:section/:id/submit', async (req, res) => {
+router.post('/:section/:id/submit', optionalAuth, async (req, res) => {
   try {
     const { section, id } = req.params;
-    const { answers } = req.body;
+    const { answers, duration } = req.body;
 
     if (!answers || typeof answers !== 'object') {
       return res.status(400).json({ error: 'Answers are required' });
@@ -236,10 +257,34 @@ router.post('/:section/:id/submit', async (req, res) => {
       }
     }
 
+    const totalQuestions = correctCount + incorrectCount;
+
+    // Save to user_history if user is authenticated
+    if (req.userId) {
+      try {
+        await sequelize.query(`
+          INSERT INTO user_history (user_id, test_id, test_type, section, duration, score, score_from, answers, created_date)
+          VALUES (:userId, :testId, 'ielts', :section, :duration, :score, :scoreFrom, :answers, NOW())
+        `, {
+          replacements: {
+            userId: req.userId,
+            testId: id,
+            section: section,
+            duration: duration || '00:00',
+            score: correctCount,
+            scoreFrom: totalQuestions,
+            answers: JSON.stringify(results)
+          }
+        });
+      } catch (saveError) {
+        console.error('Error saving IELTS history:', saveError);
+      }
+    }
+
     res.json({
       correct: correctCount,
       incorrect: incorrectCount,
-      total: correctCount + incorrectCount,
+      total: totalQuestions,
       results
     });
   } catch (error) {

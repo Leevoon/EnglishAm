@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toeflAPI } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import './ToeflSection.css';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
@@ -13,9 +14,12 @@ const formatTime = (seconds) => {
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 };
 
+const LEVEL_NAMES = { 0: 'Free', 1: 'Silver', 2: 'Gold' };
+
 const ToeflListening = () => {
   const { testId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [tests, setTests] = useState([]);
   const [selectedTest, setSelectedTest] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -33,13 +37,15 @@ const ToeflListening = () => {
   const handleSubmit = useCallback(async (answers) => {
     try {
       if (timerRef.current) clearInterval(timerRef.current);
-      const response = await toeflAPI.submitSection('listening', testId, answers || selectedAnswers);
+      const elapsed = TEST_DURATION - timeLeft;
+      const duration = formatTime(elapsed);
+      const response = await toeflAPI.submitSection('listening', testId, answers || selectedAnswers, duration);
       setResults(response.data);
       setSubmitted(true);
     } catch (error) {
       console.error('Error submitting test:', error);
     }
-  }, [testId, selectedAnswers]);
+  }, [testId, selectedAnswers, timeLeft]);
 
   useEffect(() => {
     if (testId) {
@@ -99,6 +105,12 @@ const ToeflListening = () => {
       setSubmitted(false);
       setResults(null);
     } catch (error) {
+      if (error.response?.status === 403) {
+        const level = error.response.data?.required_level || 1;
+        alert(`This content requires a ${LEVEL_NAMES[level] || 'Premium'} membership. Please upgrade to access.`);
+        navigate('/toefl/listening');
+        return;
+      }
       console.error('Error loading test:', error);
     } finally {
       setLoading(false);
@@ -286,8 +298,12 @@ const ToeflListening = () => {
         <div className="tests-list">
           {tests.length > 0 ? (
             tests.map((test) => (
-              <div key={test.id} className="test-item" onClick={() => handleTestSelect(test.id)}>
-                <h3>{test.name || `Test ${test.id}`}</h3>
+              <div key={test.id} className={`test-item${test.locked ? ' test-locked' : ''}`} onClick={() => handleTestSelect(test.id)}>
+                <h3>
+                  {test.locked && <span className="lock-icon" title={`Requires ${LEVEL_NAMES[test.required_level] || 'Premium'} membership`}>&#128274; </span>}
+                  {test.name || `Test ${test.id}`}
+                </h3>
+                {test.locked && <span className="membership-badge">{LEVEL_NAMES[test.required_level] || 'Premium'}</span>}
               </div>
             ))
           ) : (

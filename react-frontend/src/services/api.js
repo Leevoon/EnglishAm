@@ -55,7 +55,7 @@ export const toeflAPI = {
   getWriting: (languageId = 1) => api.get(`/toefl/writing?languageId=${languageId}`),
   getComplete: (languageId = 1) => api.get(`/toefl/complete?languageId=${languageId}`),
   getSection: (section, id, languageId = 1) => api.get(`/toefl/${section}/${id}?languageId=${languageId}`),
-  submitSection: (section, id, answers) => api.post(`/toefl/${section}/${id}/submit`, { answers })
+  submitSection: (section, id, answers, duration) => api.post(`/toefl/${section}/${id}/submit`, { answers, duration })
 };
 
 // IELTS API
@@ -66,7 +66,7 @@ export const ieltsAPI = {
   getWriting: (languageId = 1) => api.get(`/ielts/writing?languageId=${languageId}`),
   getComplete: (languageId = 1) => api.get(`/ielts/complete?languageId=${languageId}`),
   getSection: (section, id, languageId = 1) => api.get(`/ielts/${section}/${id}?languageId=${languageId}`),
-  submitSection: (section, id, answers) => api.post(`/ielts/${section}/${id}/submit`, { answers })
+  submitSection: (section, id, answers, duration) => api.post(`/ielts/${section}/${id}/submit`, { answers, duration })
 };
 
 // Content API

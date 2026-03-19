@@ -18,6 +18,8 @@ const Review = require('./Review');
 const Membership = require('./Membership');
 const MembershipLabel = require('./MembershipLabel');
 const Gallery = require('./Gallery');
+const MembershipHasTest = require('./MembershipHasTest');
+const UserHasMembership = require('./UserHasMembership');
 
 // Define existing associations
 Category.hasMany(CategoryLabel, { foreignKey: 'category_id', as: 'labels' });
@@ -60,6 +62,14 @@ Language.hasMany(SlideshowLabel, { foreignKey: 'language_id' });
 Language.hasMany(NewsLabel, { foreignKey: 'language_id' });
 Language.hasMany(MembershipLabel, { foreignKey: 'language_id' });
 
+// Membership access associations
+Membership.hasMany(MembershipHasTest, { foreignKey: 'membership_id', as: 'testAccess' });
+MembershipHasTest.belongsTo(Membership, { foreignKey: 'membership_id', as: 'membership' });
+
+User.hasMany(UserHasMembership, { foreignKey: 'user_id', as: 'memberships' });
+UserHasMembership.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+UserHasMembership.belongsTo(Membership, { foreignKey: 'membership_id', as: 'membership' });
+
 module.exports = {
   sequelize,
   Category,
@@ -80,5 +90,7 @@ module.exports = {
   Review,
   Membership,
   MembershipLabel,
-  Gallery
+  Gallery,
+  MembershipHasTest,
+  UserHasMembership
 };
