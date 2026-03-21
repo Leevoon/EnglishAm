@@ -6,6 +6,9 @@ import { BrowserRouter } from 'react-router-dom';
 import dataProvider from './dataProvider';
 import authProvider from './authProvider';
 
+// Layout
+import CustomLayout from './CustomLayout';
+
 // Existing Resources
 import { CategoryList, CategoryEdit, CategoryCreate } from './resources/categories';
 import { TestCategoryList, TestCategoryEdit, TestCategoryCreate } from './resources/testCategories';
@@ -44,25 +47,6 @@ import { IeltsWritingList, IeltsWritingEdit, IeltsWritingCreate } from './resour
 // Dashboard
 import Dashboard from './Dashboard';
 
-// Icons
-import CategoryIcon from '@mui/icons-material/Category';
-import QuizIcon from '@mui/icons-material/Quiz';
-import ListAltIcon from '@mui/icons-material/ListAlt';
-import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
-import LanguageIcon from '@mui/icons-material/Language';
-import PeopleIcon from '@mui/icons-material/People';
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
-import NewspaperIcon from '@mui/icons-material/Newspaper';
-import SlideshowIcon from '@mui/icons-material/Slideshow';
-import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
-import CardMembershipIcon from '@mui/icons-material/CardMembership';
-import LockIcon from '@mui/icons-material/Lock';
-import HistoryIcon from '@mui/icons-material/History';
-import MenuBookIcon from '@mui/icons-material/MenuBook';
-import HeadphonesIcon from '@mui/icons-material/Headphones';
-import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
-import EditNoteIcon from '@mui/icons-material/EditNote';
-
 const AdminApp = () => {
   return (
     <BrowserRouter basename="/admin">
@@ -70,83 +54,105 @@ const AdminApp = () => {
         dataProvider={dataProvider}
         authProvider={authProvider}
         dashboard={Dashboard}
+        layout={CustomLayout}
         requireAuth
         title="English.am Admin"
         disableTelemetry
       >
-      {/* Existing Resources */}
+      {/* Content Management */}
       <Resource
         name="categories"
         list={CategoryList}
         edit={CategoryEdit}
         create={CategoryCreate}
-        icon={CategoryIcon}
         options={{ label: 'Categories' }}
+        recordRepresentation="name"
       />
       <Resource
         name="test-categories"
         list={TestCategoryList}
         edit={TestCategoryEdit}
         create={TestCategoryCreate}
-        icon={ListAltIcon}
         options={{ label: 'Test Categories' }}
+        recordRepresentation="name"
       />
       <Resource
         name="tests"
         list={TestList}
         edit={TestEdit}
         create={TestCreate}
-        icon={QuizIcon}
         options={{ label: 'Tests' }}
+        recordRepresentation="question"
       />
       <Resource
         name="test-levels"
         list={TestLevelList}
         edit={TestLevelEdit}
         create={TestLevelCreate}
-        icon={SignalCellularAltIcon}
         options={{ label: 'Test Levels' }}
+        recordRepresentation="name"
       />
       <Resource
         name="languages"
         list={LanguageList}
         edit={LanguageEdit}
         create={LanguageCreate}
-        icon={LanguageIcon}
         options={{ label: 'Languages' }}
+        recordRepresentation="name"
       />
+
+      {/* Users & Access */}
       <Resource
         name="users"
         list={UserList}
         edit={UserEdit}
         create={UserCreate}
-        icon={PeopleIcon}
         options={{ label: 'Users' }}
+        recordRepresentation="email"
       />
       <Resource
         name="admins"
         list={AdminUserList}
         edit={AdminUserEdit}
         create={AdminUserCreate}
-        icon={AdminPanelSettingsIcon}
         options={{ label: 'Admins' }}
+        recordRepresentation="email"
+      />
+      <Resource
+        name="user-history"
+        list={UserHistoryList}
+        options={{ label: 'User History' }}
+      />
+      <Resource
+        name="membership-plans"
+        list={MembershipPlansList}
+        edit={MembershipPlansEdit}
+        create={MembershipPlansCreate}
+        options={{ label: 'Membership Plans' }}
+        recordRepresentation="name"
+      />
+      <Resource
+        name="membership-access"
+        list={MembershipAccessList}
+        edit={MembershipAccessEdit}
+        create={MembershipAccessCreate}
+        options={{ label: 'Membership Access' }}
       />
 
-      {/* CMS Content */}
+      {/* CMS */}
       <Resource
         name="news"
         list={NewsList}
         edit={NewsEdit}
         create={NewsCreate}
-        icon={NewspaperIcon}
         options={{ label: 'News' }}
+        recordRepresentation="title"
       />
       <Resource
         name="slideshow"
         list={SlideshowList}
         edit={SlideshowEdit}
         create={SlideshowCreate}
-        icon={SlideshowIcon}
         options={{ label: 'Slideshow' }}
       />
       <Resource
@@ -154,30 +160,7 @@ const AdminApp = () => {
         list={GalleryList}
         edit={GalleryEdit}
         create={GalleryCreate}
-        icon={PhotoLibraryIcon}
         options={{ label: 'Gallery' }}
-      />
-      <Resource
-        name="membership-plans"
-        list={MembershipPlansList}
-        edit={MembershipPlansEdit}
-        create={MembershipPlansCreate}
-        icon={CardMembershipIcon}
-        options={{ label: 'Membership Plans' }}
-      />
-      <Resource
-        name="membership-access"
-        list={MembershipAccessList}
-        edit={MembershipAccessEdit}
-        create={MembershipAccessCreate}
-        icon={LockIcon}
-        options={{ label: 'Membership Access' }}
-      />
-      <Resource
-        name="user-history"
-        list={UserHistoryList}
-        icon={HistoryIcon}
-        options={{ label: 'User History' }}
       />
 
       {/* TOEFL */}
@@ -186,8 +169,8 @@ const AdminApp = () => {
         list={ToeflReadingList}
         edit={ToeflReadingEdit}
         create={ToeflReadingCreate}
-        icon={MenuBookIcon}
-        options={{ label: 'TOEFL Reading' }}
+        options={{ label: 'TOEFL Reading Sections' }}
+        recordRepresentation="name"
       />
       <Resource
         name="toefl-reading-tests"
@@ -208,8 +191,8 @@ const AdminApp = () => {
         list={ToeflListeningList}
         edit={ToeflListeningEdit}
         create={ToeflListeningCreate}
-        icon={HeadphonesIcon}
-        options={{ label: 'TOEFL Listening' }}
+        options={{ label: 'TOEFL Listening Sections' }}
+        recordRepresentation="name"
       />
       <Resource
         name="toefl-listening-tests"
@@ -230,16 +213,16 @@ const AdminApp = () => {
         list={ToeflSpeakingList}
         edit={ToeflSpeakingEdit}
         create={ToeflSpeakingCreate}
-        icon={RecordVoiceOverIcon}
         options={{ label: 'TOEFL Speaking' }}
+        recordRepresentation="name"
       />
       <Resource
         name="toefl-writing"
         list={ToeflWritingList}
         edit={ToeflWritingEdit}
         create={ToeflWritingCreate}
-        icon={EditNoteIcon}
         options={{ label: 'TOEFL Writing' }}
+        recordRepresentation="name"
       />
 
       {/* IELTS */}
@@ -248,8 +231,8 @@ const AdminApp = () => {
         list={IeltsReadingList}
         edit={IeltsReadingEdit}
         create={IeltsReadingCreate}
-        icon={MenuBookIcon}
-        options={{ label: 'IELTS Reading' }}
+        options={{ label: 'IELTS Reading Sections' }}
+        recordRepresentation="name"
       />
       <Resource
         name="ielts-reading-questions"
@@ -263,8 +246,8 @@ const AdminApp = () => {
         list={IeltsListeningList}
         edit={IeltsListeningEdit}
         create={IeltsListeningCreate}
-        icon={HeadphonesIcon}
-        options={{ label: 'IELTS Listening' }}
+        options={{ label: 'IELTS Listening Sections' }}
+        recordRepresentation="name"
       />
       <Resource
         name="ielts-listening-questions"
@@ -278,16 +261,16 @@ const AdminApp = () => {
         list={IeltsSpeakingList}
         edit={IeltsSpeakingEdit}
         create={IeltsSpeakingCreate}
-        icon={RecordVoiceOverIcon}
         options={{ label: 'IELTS Speaking' }}
+        recordRepresentation="name"
       />
       <Resource
         name="ielts-writing"
         list={IeltsWritingList}
         edit={IeltsWritingEdit}
         create={IeltsWritingCreate}
-        icon={EditNoteIcon}
         options={{ label: 'IELTS Writing' }}
+        recordRepresentation="name"
       />
     </Admin>
     </BrowserRouter>

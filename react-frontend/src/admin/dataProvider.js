@@ -7,12 +7,12 @@ const httpClient = (url, options = {}) => {
   if (!options.headers) {
     options.headers = new Headers({ Accept: 'application/json' });
   }
-  
+
   const token = localStorage.getItem('adminToken');
   if (token) {
     options.headers.set('Authorization', `Bearer ${token}`);
   }
-  
+
   return fetchUtils.fetchJson(url, options);
 };
 
@@ -21,7 +21,7 @@ const dataProvider = {
   getList: async (resource, params) => {
     const { page, perPage } = params.pagination;
     const { field, order } = params.sort;
-    
+
     const query = {
       page,
       perPage,
@@ -29,17 +29,55 @@ const dataProvider = {
       sortOrder: order,
       filter: JSON.stringify(params.filter),
     };
-    
+
     const queryString = Object.keys(query)
       .map(key => `${key}=${encodeURIComponent(query[key])}`)
       .join('&');
-    
+
     const url = `${ADMIN_API_URL}/${resource}?${queryString}`;
     const { json } = await httpClient(url);
-    
+
+    // Handle raw array responses (endpoints without server-side pagination)
+    if (Array.isArray(json)) {
+      let data = [...json];
+
+      // Client-side filtering
+      const filter = params.filter || {};
+      if (Object.keys(filter).length > 0) {
+        data = data.filter(item => {
+          return Object.entries(filter).every(([key, value]) => {
+            if (value === '' || value === null || value === undefined) return true;
+            if (key === 'q') {
+              const searchStr = String(value).toLowerCase();
+              return Object.values(item).some(v =>
+                String(v).toLowerCase().includes(searchStr)
+              );
+            }
+            return String(item[key]) === String(value);
+          });
+        });
+      }
+
+      // Client-side sorting
+      data.sort((a, b) => {
+        const aVal = a[field] ?? '';
+        const bVal = b[field] ?? '';
+        if (aVal < bVal) return order === 'ASC' ? -1 : 1;
+        if (aVal > bVal) return order === 'ASC' ? 1 : -1;
+        return 0;
+      });
+
+      const total = data.length;
+      const start = (page - 1) * perPage;
+      const paginatedData = data.slice(start, start + perPage);
+
+      return { data: paginatedData, total };
+    }
+
+    // Handle wrapped responses {data, total}
     return {
-      data: json.data,
-      total: json.total,
+      data: json.data || [],
+      total: json.total != null ? json.total : (json.data ? json.data.length : 0),
     };
   },
 
@@ -47,7 +85,7 @@ const dataProvider = {
   getOne: async (resource, params) => {
     const url = `${ADMIN_API_URL}/${resource}/${params.id}`;
     const { json } = await httpClient(url);
-    
+
     return { data: json };
   },
 
@@ -64,6 +102,9 @@ const dataProvider = {
     const url = `${ADMIN_API_URL}/${resource}?${queryString}`;
     const { json } = await httpClient(url);
 
+    if (Array.isArray(json)) {
+      return { data: json.filter(item => params.ids.map(String).includes(String(item.id))) };
+    }
     return { data: json.data || json };
   },
 
@@ -71,7 +112,7 @@ const dataProvider = {
   getManyReference: async (resource, params) => {
     const { page, perPage } = params.pagination;
     const { field, order } = params.sort;
-    
+
     const query = {
       page,
       perPage,
@@ -82,17 +123,40 @@ const dataProvider = {
         [params.target]: params.id,
       }),
     };
-    
+
     const queryString = Object.keys(query)
       .map(key => `${key}=${encodeURIComponent(query[key])}`)
       .join('&');
-    
+
     const url = `${ADMIN_API_URL}/${resource}?${queryString}`;
     const { json } = await httpClient(url);
-    
+
+    // Handle raw array responses
+    if (Array.isArray(json)) {
+      const targetFilter = { ...params.filter, [params.target]: params.id };
+      let data = json.filter(item => {
+        return Object.entries(targetFilter).every(([key, value]) => {
+          if (value === '' || value === null || value === undefined) return true;
+          return String(item[key]) === String(value);
+        });
+      });
+
+      data.sort((a, b) => {
+        const aVal = a[field] ?? '';
+        const bVal = b[field] ?? '';
+        if (aVal < bVal) return order === 'ASC' ? -1 : 1;
+        if (aVal > bVal) return order === 'ASC' ? 1 : -1;
+        return 0;
+      });
+
+      const total = data.length;
+      const start = (page - 1) * perPage;
+      return { data: data.slice(start, start + perPage), total };
+    }
+
     return {
-      data: json.data,
-      total: json.total,
+      data: json.data || [],
+      total: json.total != null ? json.total : (json.data ? json.data.length : 0),
     };
   },
 
@@ -103,7 +167,7 @@ const dataProvider = {
       method: 'POST',
       body: JSON.stringify(params.data),
     });
-    
+
     return { data: { ...params.data, id: json.id } };
   },
 
@@ -114,7 +178,7 @@ const dataProvider = {
       method: 'PUT',
       body: JSON.stringify(params.data),
     });
-    
+
     return { data: json };
   },
 
@@ -126,9 +190,9 @@ const dataProvider = {
         body: JSON.stringify(params.data),
       })
     );
-    
+
     await Promise.all(promises);
-    
+
     return { data: params.ids };
   },
 
@@ -138,7 +202,7 @@ const dataProvider = {
     const { json } = await httpClient(url, {
       method: 'DELETE',
     });
-    
+
     return { data: json };
   },
 
@@ -149,12 +213,11 @@ const dataProvider = {
         method: 'DELETE',
       })
     );
-    
+
     await Promise.all(promises);
-    
+
     return { data: params.ids };
   },
 };
 
 export default dataProvider;
-

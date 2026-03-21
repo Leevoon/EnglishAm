@@ -1,28 +1,26 @@
 import React from 'react';
 import {
-  List, Datagrid, TextField, EditButton, DeleteButton,
-  Edit, Create, SimpleForm, TextInput, SelectInput, Filter,
-  useRecordContext,
+  List, Datagrid, TextField, NumberField,
+  Edit, Create, SimpleForm, TextInput, SelectInput,
+  EditButton,
 } from 'react-admin';
+import { StatusField } from '../../components';
 
-const SlideshowFilter = (props) => (
-  <Filter {...props}>
-    <TextInput label="Value" source="value" alwaysOn />
-    <SelectInput label="Status" source="status" choices={[
-      { id: 'Active', name: 'Active' },
-      { id: 'Inactive', name: 'Inactive' },
-    ]} />
-  </Filter>
-);
+const filters = [
+  <TextInput source="value" label="Value" alwaysOn />,
+  <SelectInput source="status" choices={[
+    { id: 1, name: 'Active' },
+    { id: 0, name: 'Inactive' },
+  ]} />,
+];
 
 export const SlideshowList = () => (
-  <List filters={<SlideshowFilter />}>
-    <Datagrid>
-      <TextField source="id" />
+  <List filters={filters} perPage={25}>
+    <Datagrid rowClick="edit" bulkActionButtons={false}>
+      <NumberField source="id" />
       <TextField source="value" />
-      <TextField source="status" />
+      <StatusField source="status" />
       <EditButton />
-      <DeleteButton />
     </Datagrid>
   </List>
 );
@@ -30,10 +28,10 @@ export const SlideshowList = () => (
 export const SlideshowEdit = () => (
   <Edit>
     <SimpleForm>
-      <TextInput source="value" />
+      <TextInput source="value" fullWidth />
       <SelectInput source="status" choices={[
-        { id: 'Active', name: 'Active' },
-        { id: 'Inactive', name: 'Inactive' },
+        { id: 1, name: 'Active' },
+        { id: 0, name: 'Inactive' },
       ]} />
     </SimpleForm>
   </Edit>
@@ -42,11 +40,11 @@ export const SlideshowEdit = () => (
 export const SlideshowCreate = () => (
   <Create>
     <SimpleForm>
-      <TextInput source="value" />
+      <TextInput source="value" fullWidth />
       <SelectInput source="status" choices={[
-        { id: 'Active', name: 'Active' },
-        { id: 'Inactive', name: 'Inactive' },
-      ]} />
+        { id: 1, name: 'Active' },
+        { id: 0, name: 'Inactive' },
+      ]} defaultValue={1} />
     </SimpleForm>
   </Create>
 );

@@ -1,59 +1,58 @@
 import React from 'react';
 import {
-  List, Datagrid, TextField, NumberField, EditButton, DeleteButton,
-  Edit, Create, SimpleForm, TextInput, NumberInput, SelectInput, Filter,
-  useRecordContext, ArrayInput, SimpleFormIterator, BooleanInput,
+  List, Datagrid, NumberField,
+  Edit, Create, SimpleForm, TextInput, NumberInput,
+  ArrayInput, SimpleFormIterator, BooleanInput,
+  required, EditButton,
 } from 'react-admin';
-import { RichTextInput } from 'ra-input-rich-text';
+import { HtmlPreviewField } from '../../components';
 
-const IeltsReadingQuestionFilter = (props) => (
-  <Filter {...props}>
-    <NumberInput label="Reading ID" source="ielts_reading_id" alwaysOn />
-  </Filter>
-);
+const filters = [
+  <NumberInput source="ielts_reading_id" label="Reading Section ID" alwaysOn />,
+];
 
-export const IeltsReadingQuestionList = (props) => (
-  <List {...props} filters={<IeltsReadingQuestionFilter />}>
-    <Datagrid>
-      <TextField source="id" />
-      <NumberField source="ielts_reading_id" />
-      <TextField source="question" />
-      <NumberField source="answer_count" />
-      <NumberField source="sort_order" />
+export const IeltsReadingQuestionList = () => (
+  <List filters={filters} perPage={25}>
+    <Datagrid rowClick="edit" bulkActionButtons={false}>
+      <NumberField source="id" />
+      <NumberField source="ielts_reading_id" label="Section ID" />
+      <HtmlPreviewField source="question" label="Question" maxLength={100} />
+      <NumberField source="answer_count" label="Answers" />
+      <NumberField source="sort_order" label="Order" />
       <EditButton />
-      <DeleteButton />
     </Datagrid>
   </List>
 );
 
-export const IeltsReadingQuestionEdit = (props) => (
-  <Edit {...props}>
+export const IeltsReadingQuestionEdit = () => (
+  <Edit>
     <SimpleForm>
-      <NumberInput source="ielts_reading_id" label="Reading ID" />
-      <TextInput source="question" multiline />
-      <TextInput source="sentences" multiline label="Sentences" />
-      <NumberInput source="sort_order" />
-      <ArrayInput source="answers">
-        <SimpleFormIterator>
-          <TextInput source="answer" />
-          <BooleanInput source="is_correct" />
+      <NumberInput source="id" disabled />
+      <NumberInput source="ielts_reading_id" label="Reading Section ID" validate={required()} />
+      <TextInput source="question" label="Question" multiline fullWidth rows={3} />
+      <TextInput source="sentences" label="Sentences" multiline fullWidth rows={2} />
+      <NumberInput source="sort_order" label="Order" />
+      <ArrayInput source="answers" label="Answer Options">
+        <SimpleFormIterator inline>
+          <TextInput source="answer" label="Answer Text" sx={{ width: 400 }} />
+          <BooleanInput source="true_false" label="Correct?" />
         </SimpleFormIterator>
       </ArrayInput>
     </SimpleForm>
   </Edit>
 );
 
-export const IeltsReadingQuestionCreate = (props) => (
-  <Create {...props}>
+export const IeltsReadingQuestionCreate = () => (
+  <Create>
     <SimpleForm>
-      <NumberInput source="ielts_reading_id" label="Reading ID" />
-      <TextInput source="question" multiline />
-      <TextInput source="sentences" multiline label="Sentences" />
-      <NumberInput source="sort_order" />
-      <ArrayInput source="answers">
-        <SimpleFormIterator>
-          <TextInput source="answer" />
-          <BooleanInput source="is_correct" />
+      <NumberInput source="ielts_reading_id" label="Reading Section ID" validate={required()} />
+      <TextInput source="question" label="Question" multiline fullWidth rows={3} />
+      <TextInput source="sentences" label="Sentences" multiline fullWidth rows={2} />
+      <NumberInput source="sort_order" label="Order" defaultValue={0} />
+      <ArrayInput source="answers" label="Answer Options">
+        <SimpleFormIterator inline>
+          <TextInput source="answer" label="Answer Text" sx={{ width: 400 }} />
+          <BooleanInput source="true_false" label="Correct?" defaultValue={false} />
         </SimpleFormIterator>
       </ArrayInput>
     </SimpleForm>

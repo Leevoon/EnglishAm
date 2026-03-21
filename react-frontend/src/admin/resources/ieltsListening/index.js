@@ -1,58 +1,58 @@
 import React from 'react';
 import {
-  List, Datagrid, TextField, NumberField, EditButton, DeleteButton,
-  Edit, Create, SimpleForm, TextInput, NumberInput, SelectInput, Filter,
-  useRecordContext, ArrayInput, SimpleFormIterator, BooleanInput,
+  List, Datagrid, TextField, NumberField, DateField,
+  Edit, Create, SimpleForm, TextInput, NumberInput, SelectInput,
+  required, EditButton,
 } from 'react-admin';
-import { RichTextInput } from 'ra-input-rich-text';
+import { StatusField, ViewRelatedButton } from '../../components';
 
-const IeltsListeningFilter = (props) => (
-  <Filter {...props}>
-    <TextInput label="Search by name" source="name" alwaysOn />
-  </Filter>
-);
+const filters = [
+  <TextInput source="q" label="Search" alwaysOn />,
+];
 
-export const IeltsListeningList = (props) => (
-  <List {...props} filters={<IeltsListeningFilter />}>
-    <Datagrid>
-      <TextField source="id" />
+export const IeltsListeningList = () => (
+  <List filters={filters} sort={{ field: 'sort_order', order: 'ASC' }} perPage={25}>
+    <Datagrid rowClick="edit" bulkActionButtons={false}>
+      <NumberField source="id" />
       <TextField source="name" />
-      <TextField source="listening_audio" />
-      <TextField source="image" />
-      <TextField source="status" />
-      <NumberField source="sort_order" />
+      <TextField source="listening_audio" label="Audio" />
+      <TextField source="image" label="Image" />
+      <StatusField source="status" />
+      <NumberField source="sort_order" label="Order" />
+      <DateField source="created_date" label="Created" />
+      <ViewRelatedButton resource="ielts-listening-questions" filterField="ielts_listening_id" label="Questions" />
       <EditButton />
-      <DeleteButton />
     </Datagrid>
   </List>
 );
 
-export const IeltsListeningEdit = (props) => (
-  <Edit {...props}>
+export const IeltsListeningEdit = () => (
+  <Edit>
     <SimpleForm>
-      <TextInput source="name" />
-      <TextInput source="listening_audio" />
-      <TextInput source="image" />
+      <TextInput source="id" disabled />
+      <TextInput source="name" validate={required()} fullWidth />
+      <TextInput source="listening_audio" label="Audio File" fullWidth />
+      <TextInput source="image" label="Image" fullWidth />
       <SelectInput source="status" choices={[
-        { id: 'active', name: 'Active' },
-        { id: 'inactive', name: 'Inactive' },
+        { id: 1, name: 'Active' },
+        { id: 0, name: 'Inactive' },
       ]} />
-      <NumberInput source="sort_order" />
+      <NumberInput source="sort_order" label="Order" />
     </SimpleForm>
   </Edit>
 );
 
-export const IeltsListeningCreate = (props) => (
-  <Create {...props}>
+export const IeltsListeningCreate = () => (
+  <Create>
     <SimpleForm>
-      <TextInput source="name" />
-      <TextInput source="listening_audio" />
-      <TextInput source="image" />
+      <TextInput source="name" validate={required()} fullWidth />
+      <TextInput source="listening_audio" label="Audio File" fullWidth />
+      <TextInput source="image" label="Image" fullWidth />
       <SelectInput source="status" choices={[
-        { id: 'active', name: 'Active' },
-        { id: 'inactive', name: 'Inactive' },
-      ]} />
-      <NumberInput source="sort_order" />
+        { id: 1, name: 'Active' },
+        { id: 0, name: 'Inactive' },
+      ]} defaultValue={1} />
+      <NumberInput source="sort_order" label="Order" defaultValue={0} />
     </SimpleForm>
   </Create>
 );

@@ -1,27 +1,25 @@
 import React from 'react';
 import {
-  List, Datagrid, TextField, EditButton, DeleteButton,
-  Edit, Create, SimpleForm, TextInput, SelectInput, Filter,
-  useRecordContext,
+  List, Datagrid, TextField, NumberField,
+  Edit, Create, SimpleForm, TextInput, SelectInput,
+  EditButton,
 } from 'react-admin';
+import { StatusField } from '../../components';
 
-const GalleryFilter = (props) => (
-  <Filter {...props}>
-    <SelectInput label="Status" source="status" choices={[
-      { id: 'Active', name: 'Active' },
-      { id: 'Inactive', name: 'Inactive' },
-    ]} />
-  </Filter>
-);
+const filters = [
+  <SelectInput source="status" choices={[
+    { id: 1, name: 'Active' },
+    { id: 0, name: 'Inactive' },
+  ]} alwaysOn />,
+];
 
 export const GalleryList = () => (
-  <List filters={<GalleryFilter />}>
-    <Datagrid>
-      <TextField source="id" />
+  <List filters={filters} perPage={25}>
+    <Datagrid rowClick="edit" bulkActionButtons={false}>
+      <NumberField source="id" />
       <TextField source="image" />
-      <TextField source="status" />
+      <StatusField source="status" />
       <EditButton />
-      <DeleteButton />
     </Datagrid>
   </List>
 );
@@ -29,10 +27,10 @@ export const GalleryList = () => (
 export const GalleryEdit = () => (
   <Edit>
     <SimpleForm>
-      <TextInput source="image" />
+      <TextInput source="image" fullWidth />
       <SelectInput source="status" choices={[
-        { id: 'Active', name: 'Active' },
-        { id: 'Inactive', name: 'Inactive' },
+        { id: 1, name: 'Active' },
+        { id: 0, name: 'Inactive' },
       ]} />
     </SimpleForm>
   </Edit>
@@ -41,11 +39,11 @@ export const GalleryEdit = () => (
 export const GalleryCreate = () => (
   <Create>
     <SimpleForm>
-      <TextInput source="image" />
+      <TextInput source="image" fullWidth />
       <SelectInput source="status" choices={[
-        { id: 'Active', name: 'Active' },
-        { id: 'Inactive', name: 'Inactive' },
-      ]} />
+        { id: 1, name: 'Active' },
+        { id: 0, name: 'Inactive' },
+      ]} defaultValue={1} />
     </SimpleForm>
   </Create>
 );

@@ -1,52 +1,30 @@
 import React from 'react';
 import {
-  List,
-  Datagrid,
-  TextField,
-  EmailField,
-  NumberField,
-  DateField,
+  List, Datagrid, TextField, EmailField, NumberField, DateField,
+  Edit, Create, SimpleForm, TextInput, SelectInput, PasswordInput,
   EditButton,
-  DeleteButton,
-  Edit,
-  Create,
-  SimpleForm,
-  TextInput,
-  SelectInput,
-  PasswordInput,
-  Filter,
-  useRecordContext,
 } from 'react-admin';
+import { BlockStatusField } from '../../components';
 
-const UserFilter = (props) => (
-  <Filter {...props}>
-    <TextInput label="Search" source="q" alwaysOn />
-    <SelectInput
-      source="status"
-      choices={[
-        { id: 1, name: 'Active' },
-        { id: 0, name: 'Blocked' },
-      ]}
-    />
-  </Filter>
-);
-
-const StatusField = () => {
-  const record = useRecordContext();
-  return <span>{record?.status === 1 ? 'Active' : 'Blocked'}</span>;
-};
+const filters = [
+  <TextInput source="q" label="Search" alwaysOn />,
+  <SelectInput source="status" choices={[
+    { id: 1, name: 'Active' },
+    { id: 0, name: 'Blocked' },
+  ]} />,
+];
 
 export const UserList = () => (
-  <List filters={<UserFilter />} sort={{ field: 'id', order: 'DESC' }}>
+  <List filters={filters} sort={{ field: 'id', order: 'DESC' }} perPage={25}>
     <Datagrid rowClick="edit">
       <NumberField source="id" />
       <EmailField source="email" />
+      <TextField source="user_name" label="Username" />
       <TextField source="first_name" label="First Name" />
       <TextField source="last_name" label="Last Name" />
-      <StatusField source="status" label="Status" />
+      <BlockStatusField source="status" />
       <DateField source="created_date" label="Created" />
       <EditButton />
-      <DeleteButton />
     </Datagrid>
   </List>
 );
@@ -60,13 +38,10 @@ export const UserEdit = () => (
       <TextInput source="user_name" label="Username" fullWidth />
       <TextInput source="first_name" label="First Name" fullWidth />
       <TextInput source="last_name" label="Last Name" fullWidth />
-      <SelectInput
-        source="status"
-        choices={[
-          { id: 1, name: 'Active' },
-          { id: 0, name: 'Blocked' },
-        ]}
-      />
+      <SelectInput source="status" choices={[
+        { id: 1, name: 'Active' },
+        { id: 0, name: 'Blocked' },
+      ]} />
     </SimpleForm>
   </Edit>
 );
@@ -79,14 +54,10 @@ export const UserCreate = () => (
       <TextInput source="user_name" label="Username" fullWidth />
       <TextInput source="first_name" label="First Name" fullWidth />
       <TextInput source="last_name" label="Last Name" fullWidth />
-      <SelectInput
-        source="status"
-        choices={[
-          { id: 1, name: 'Active' },
-          { id: 0, name: 'Blocked' },
-        ]}
-        defaultValue={1}
-      />
+      <SelectInput source="status" choices={[
+        { id: 1, name: 'Active' },
+        { id: 0, name: 'Blocked' },
+      ]} defaultValue={1} />
     </SimpleForm>
   </Create>
 );

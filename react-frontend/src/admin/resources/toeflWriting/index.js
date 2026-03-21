@@ -1,49 +1,57 @@
 import React from 'react';
 import {
-  List, Datagrid, TextField, NumberField, EditButton, DeleteButton,
-  Edit, Create, SimpleForm, TextInput, NumberInput, SelectInput, Filter,
-  useRecordContext,
+  List, Datagrid, TextField, NumberField, DateField,
+  Edit, Create, SimpleForm, TextInput, NumberInput, SelectInput,
+  required, EditButton,
 } from 'react-admin';
 import { RichTextInput } from 'ra-input-rich-text';
+import { StatusField, HtmlPreviewField } from '../../components';
 
-const statusChoices = [
-  { id: 'active', name: 'Active' },
-  { id: 'inactive', name: 'Inactive' },
+const filters = [
+  <TextInput source="q" label="Search" alwaysOn />,
 ];
 
-export const ToeflWritingList = (props) => (
-  <List {...props}>
-    <Datagrid>
-      <TextField source="id" />
+export const ToeflWritingList = () => (
+  <List filters={filters} sort={{ field: 'sort_order', order: 'ASC' }} perPage={25}>
+    <Datagrid rowClick="edit" bulkActionButtons={false}>
+      <NumberField source="id" />
       <TextField source="name" />
-      <TextField source="status" />
-      <NumberField source="sort_order" />
+      <HtmlPreviewField source="text" label="Content Preview" maxLength={80} />
+      <StatusField source="status" />
+      <NumberField source="sort_order" label="Order" />
+      <DateField source="created_date" label="Created" />
       <EditButton />
-      <DeleteButton />
     </Datagrid>
   </List>
 );
 
-export const ToeflWritingEdit = (props) => (
-  <Edit {...props}>
+export const ToeflWritingEdit = () => (
+  <Edit>
     <SimpleForm>
-      <TextInput source="name" />
-      <RichTextInput source="text" label="Content" />
-      <RichTextInput source="profesor_text" label="Professor Text" />
-      <SelectInput source="status" choices={statusChoices} />
-      <NumberInput source="sort_order" />
+      <TextInput source="id" disabled />
+      <TextInput source="name" validate={required()} fullWidth />
+      <RichTextInput source="text" label="Content" fullWidth />
+      <RichTextInput source="profesor_text" label="Professor Text" fullWidth />
+      <SelectInput source="status" choices={[
+        { id: 1, name: 'Active' },
+        { id: 0, name: 'Inactive' },
+      ]} />
+      <NumberInput source="sort_order" label="Order" />
     </SimpleForm>
   </Edit>
 );
 
-export const ToeflWritingCreate = (props) => (
-  <Create {...props}>
+export const ToeflWritingCreate = () => (
+  <Create>
     <SimpleForm>
-      <TextInput source="name" />
-      <RichTextInput source="text" label="Content" />
-      <RichTextInput source="profesor_text" label="Professor Text" />
-      <SelectInput source="status" choices={statusChoices} />
-      <NumberInput source="sort_order" />
+      <TextInput source="name" validate={required()} fullWidth />
+      <RichTextInput source="text" label="Content" fullWidth />
+      <RichTextInput source="profesor_text" label="Professor Text" fullWidth />
+      <SelectInput source="status" choices={[
+        { id: 1, name: 'Active' },
+        { id: 0, name: 'Inactive' },
+      ]} defaultValue={1} />
+      <NumberInput source="sort_order" label="Order" defaultValue={0} />
     </SimpleForm>
   </Create>
 );

@@ -1,61 +1,60 @@
 import React from 'react';
 import {
-  List, Datagrid, TextField, NumberField, EditButton, DeleteButton,
-  Edit, Create, SimpleForm, TextInput, NumberInput, SelectInput, Filter,
-  useRecordContext, ArrayInput, SimpleFormIterator, BooleanInput,
+  List, Datagrid, NumberField,
+  Edit, Create, SimpleForm, TextInput, NumberInput,
+  ArrayInput, SimpleFormIterator, BooleanInput,
+  required, EditButton,
 } from 'react-admin';
-import { RichTextInput } from 'ra-input-rich-text';
+import { HtmlPreviewField } from '../../components';
 
-const IeltsListeningQuestionFilter = (props) => (
-  <Filter {...props}>
-    <NumberInput label="Listening ID" source="ielts_listening_id" alwaysOn />
-  </Filter>
-);
+const filters = [
+  <NumberInput source="ielts_listening_id" label="Listening Section ID" alwaysOn />,
+];
 
-export const IeltsListeningQuestionList = (props) => (
-  <List {...props} filters={<IeltsListeningQuestionFilter />}>
-    <Datagrid>
-      <TextField source="id" />
-      <NumberField source="ielts_listening_id" />
-      <TextField source="question" />
-      <NumberField source="answer_count" />
-      <NumberField source="sort_order" />
+export const IeltsListeningQuestionList = () => (
+  <List filters={filters} perPage={25}>
+    <Datagrid rowClick="edit" bulkActionButtons={false}>
+      <NumberField source="id" />
+      <NumberField source="ielts_listening_id" label="Section ID" />
+      <HtmlPreviewField source="question" label="Question" maxLength={100} />
+      <NumberField source="answer_count" label="Answers" />
+      <NumberField source="sort_order" label="Order" />
       <EditButton />
-      <DeleteButton />
     </Datagrid>
   </List>
 );
 
-export const IeltsListeningQuestionEdit = (props) => (
-  <Edit {...props}>
+export const IeltsListeningQuestionEdit = () => (
+  <Edit>
     <SimpleForm>
-      <NumberInput source="ielts_listening_id" label="Listening ID" />
-      <TextInput source="question" multiline />
-      <TextInput source="sentences" multiline label="Sentences" />
-      <TextInput source="listening_audio" label="Listening Audio" />
-      <NumberInput source="sort_order" />
-      <ArrayInput source="answers">
-        <SimpleFormIterator>
-          <TextInput source="answer" />
-          <BooleanInput source="is_correct" />
+      <NumberInput source="id" disabled />
+      <NumberInput source="ielts_listening_id" label="Listening Section ID" validate={required()} />
+      <TextInput source="question" label="Question" multiline fullWidth rows={3} />
+      <TextInput source="sentences" label="Sentences" multiline fullWidth rows={2} />
+      <TextInput source="listening_audio" label="Audio File" fullWidth />
+      <NumberInput source="sort_order" label="Order" />
+      <ArrayInput source="answers" label="Answer Options">
+        <SimpleFormIterator inline>
+          <TextInput source="answer" label="Answer Text" sx={{ width: 400 }} />
+          <BooleanInput source="true_false" label="Correct?" />
         </SimpleFormIterator>
       </ArrayInput>
     </SimpleForm>
   </Edit>
 );
 
-export const IeltsListeningQuestionCreate = (props) => (
-  <Create {...props}>
+export const IeltsListeningQuestionCreate = () => (
+  <Create>
     <SimpleForm>
-      <NumberInput source="ielts_listening_id" label="Listening ID" />
-      <TextInput source="question" multiline />
-      <TextInput source="sentences" multiline label="Sentences" />
-      <TextInput source="listening_audio" label="Listening Audio" />
-      <NumberInput source="sort_order" />
-      <ArrayInput source="answers">
-        <SimpleFormIterator>
-          <TextInput source="answer" />
-          <BooleanInput source="is_correct" />
+      <NumberInput source="ielts_listening_id" label="Listening Section ID" validate={required()} />
+      <TextInput source="question" label="Question" multiline fullWidth rows={3} />
+      <TextInput source="sentences" label="Sentences" multiline fullWidth rows={2} />
+      <TextInput source="listening_audio" label="Audio File" fullWidth />
+      <NumberInput source="sort_order" label="Order" defaultValue={0} />
+      <ArrayInput source="answers" label="Answer Options">
+        <SimpleFormIterator inline>
+          <TextInput source="answer" label="Answer Text" sx={{ width: 400 }} />
+          <BooleanInput source="true_false" label="Correct?" defaultValue={false} />
         </SimpleFormIterator>
       </ArrayInput>
     </SimpleForm>

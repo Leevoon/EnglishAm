@@ -1,56 +1,57 @@
 import React from 'react';
 import {
-  List, Datagrid, TextField, NumberField, EditButton, DeleteButton,
-  Edit, Create, SimpleForm, TextInput, NumberInput, SelectInput, Filter,
-  useRecordContext, ArrayInput, SimpleFormIterator, BooleanInput,
+  List, Datagrid, TextField, NumberField, DateField,
+  Edit, Create, SimpleForm, TextInput, NumberInput, SelectInput,
+  required, EditButton,
 } from 'react-admin';
 import { RichTextInput } from 'ra-input-rich-text';
+import { StatusField, ViewRelatedButton } from '../../components';
 
-const IeltsReadingFilter = (props) => (
-  <Filter {...props}>
-    <TextInput label="Search by name" source="name" alwaysOn />
-  </Filter>
-);
+const filters = [
+  <TextInput source="q" label="Search" alwaysOn />,
+];
 
-export const IeltsReadingList = (props) => (
-  <List {...props} filters={<IeltsReadingFilter />}>
-    <Datagrid>
-      <TextField source="id" />
+export const IeltsReadingList = () => (
+  <List filters={filters} sort={{ field: 'sort_order', order: 'ASC' }} perPage={25}>
+    <Datagrid rowClick="edit" bulkActionButtons={false}>
+      <NumberField source="id" />
       <TextField source="name" />
-      <TextField source="status" />
-      <NumberField source="sort_order" />
+      <StatusField source="status" />
+      <NumberField source="sort_order" label="Order" />
+      <DateField source="created_date" label="Created" />
+      <ViewRelatedButton resource="ielts-reading-questions" filterField="ielts_reading_id" label="Questions" />
       <EditButton />
-      <DeleteButton />
     </Datagrid>
   </List>
 );
 
-export const IeltsReadingEdit = (props) => (
-  <Edit {...props}>
+export const IeltsReadingEdit = () => (
+  <Edit>
     <SimpleForm>
-      <TextInput source="name" />
-      <RichTextInput source="reading_text" label="Reading Text" />
-      <RichTextInput source="explain_text" label="Explanation" />
+      <TextInput source="id" disabled />
+      <TextInput source="name" validate={required()} fullWidth />
+      <RichTextInput source="reading_text" label="Reading Text" fullWidth />
+      <RichTextInput source="explain_text" label="Explanation" fullWidth />
       <SelectInput source="status" choices={[
-        { id: 'active', name: 'Active' },
-        { id: 'inactive', name: 'Inactive' },
+        { id: 1, name: 'Active' },
+        { id: 0, name: 'Inactive' },
       ]} />
-      <NumberInput source="sort_order" />
+      <NumberInput source="sort_order" label="Order" />
     </SimpleForm>
   </Edit>
 );
 
-export const IeltsReadingCreate = (props) => (
-  <Create {...props}>
+export const IeltsReadingCreate = () => (
+  <Create>
     <SimpleForm>
-      <TextInput source="name" />
-      <RichTextInput source="reading_text" label="Reading Text" />
-      <RichTextInput source="explain_text" label="Explanation" />
+      <TextInput source="name" validate={required()} fullWidth />
+      <RichTextInput source="reading_text" label="Reading Text" fullWidth />
+      <RichTextInput source="explain_text" label="Explanation" fullWidth />
       <SelectInput source="status" choices={[
-        { id: 'active', name: 'Active' },
-        { id: 'inactive', name: 'Inactive' },
-      ]} />
-      <NumberInput source="sort_order" />
+        { id: 1, name: 'Active' },
+        { id: 0, name: 'Inactive' },
+      ]} defaultValue={1} />
+      <NumberInput source="sort_order" label="Order" defaultValue={0} />
     </SimpleForm>
   </Create>
 );

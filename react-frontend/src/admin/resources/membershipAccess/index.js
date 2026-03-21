@@ -1,9 +1,10 @@
 import React from 'react';
 import {
-  List, Datagrid, TextField, NumberField, EditButton, DeleteButton,
-  Edit, Create, SimpleForm, TextInput, NumberInput, SelectInput, Filter,
-  useRecordContext,
+  List, Datagrid, TextField, NumberField,
+  Edit, Create, SimpleForm, NumberInput, SelectInput,
+  EditButton, FunctionField, useRecordContext,
 } from 'react-admin';
+import { Chip } from '@mui/material';
 
 const typeChoices = [
   { id: 0, name: 'Test' },
@@ -18,42 +19,43 @@ const typeChoices = [
 ];
 
 const typeLabels = {
-  0: 'Test',
-  1: 'TOEFL Reading',
-  2: 'TOEFL Listening',
-  3: 'TOEFL Speaking',
-  4: 'TOEFL Writing',
-  5: 'IELTS Reading',
-  6: 'IELTS Listening',
-  7: 'IELTS Speaking',
-  8: 'IELTS Writing',
+  0: 'Test', 1: 'TOEFL Reading', 2: 'TOEFL Listening', 3: 'TOEFL Speaking',
+  4: 'TOEFL Writing', 5: 'IELTS Reading', 6: 'IELTS Listening',
+  7: 'IELTS Speaking', 8: 'IELTS Writing',
 };
 
-const TypeField = ({ source }) => {
+const TypeField = () => {
   const record = useRecordContext();
   if (!record) return null;
-  return <span>{typeLabels[record[source]] || record[source]}</span>;
+  const label = typeLabels[record.type] || String(record.type);
+  const isToefl = record.type >= 1 && record.type <= 4;
+  const isIelts = record.type >= 5 && record.type <= 8;
+  return (
+    <Chip
+      label={label}
+      color={isToefl ? 'primary' : isIelts ? 'secondary' : 'default'}
+      size="small"
+      variant="outlined"
+    />
+  );
 };
 
-const MembershipAccessFilter = (props) => (
-  <Filter {...props}>
-    <NumberInput label="Membership ID" source="membership_id" alwaysOn />
-    <NumberInput label="Test ID" source="test_id" />
-    <SelectInput label="Type" source="type" choices={typeChoices} />
-  </Filter>
-);
+const filters = [
+  <NumberInput source="membership_id" label="Membership ID" alwaysOn />,
+  <NumberInput source="test_id" label="Test ID" />,
+  <SelectInput source="type" label="Type" choices={typeChoices} />,
+];
 
 export const MembershipAccessList = () => (
-  <List filters={<MembershipAccessFilter />}>
-    <Datagrid>
-      <TextField source="id" />
-      <NumberField source="membership_id" />
-      <NumberField source="test_id" />
-      <TypeField source="type" label="Type" />
-      <TextField source="membership_name" />
-      <TextField source="membership_level" />
+  <List filters={filters} perPage={25}>
+    <Datagrid rowClick="edit" bulkActionButtons={false}>
+      <NumberField source="id" />
+      <NumberField source="membership_id" label="Membership" />
+      <NumberField source="test_id" label="Test" />
+      <TypeField label="Type" />
+      <TextField source="membership_name" label="Plan Name" />
+      <TextField source="membership_level" label="Level" />
       <EditButton />
-      <DeleteButton />
     </Datagrid>
   </List>
 );
@@ -61,8 +63,8 @@ export const MembershipAccessList = () => (
 export const MembershipAccessEdit = () => (
   <Edit>
     <SimpleForm>
-      <NumberInput source="membership_id" />
-      <NumberInput source="test_id" />
+      <NumberInput source="membership_id" label="Membership ID" />
+      <NumberInput source="test_id" label="Test ID" />
       <SelectInput source="type" choices={typeChoices} />
     </SimpleForm>
   </Edit>
@@ -71,8 +73,8 @@ export const MembershipAccessEdit = () => (
 export const MembershipAccessCreate = () => (
   <Create>
     <SimpleForm>
-      <NumberInput source="membership_id" />
-      <NumberInput source="test_id" />
+      <NumberInput source="membership_id" label="Membership ID" />
+      <NumberInput source="test_id" label="Test ID" />
       <SelectInput source="type" choices={typeChoices} />
     </SimpleForm>
   </Create>
