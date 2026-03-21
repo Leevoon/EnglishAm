@@ -26,23 +26,27 @@ import { MembershipPlansList, MembershipPlansEdit, MembershipPlansCreate } from 
 import { MembershipAccessList, MembershipAccessEdit, MembershipAccessCreate } from './resources/membershipAccess';
 import { UserHistoryList } from './resources/userHistory';
 
-// TOEFL Resources
+// TOEFL Combined Resources
 import { ToeflReadingList, ToeflReadingEdit, ToeflReadingCreate } from './resources/toeflReading';
-import { ToeflReadingTestList, ToeflReadingTestEdit, ToeflReadingTestCreate } from './resources/toeflReadingTests';
-import { ToeflReadingQuestionList, ToeflReadingQuestionEdit, ToeflReadingQuestionCreate } from './resources/toeflReadingQuestions';
 import { ToeflListeningList, ToeflListeningEdit, ToeflListeningCreate } from './resources/toeflListening';
-import { ToeflListeningTestList, ToeflListeningTestEdit, ToeflListeningTestCreate } from './resources/toeflListeningTests';
-import { ToeflListeningQuestionList, ToeflListeningQuestionEdit, ToeflListeningQuestionCreate } from './resources/toeflListeningQuestions';
 import { ToeflSpeakingList, ToeflSpeakingEdit, ToeflSpeakingCreate } from './resources/toeflSpeaking';
 import { ToeflWritingList, ToeflWritingEdit, ToeflWritingCreate } from './resources/toeflWriting';
 
-// IELTS Resources
+// TOEFL Sub-resources (kept for dataProvider access, edit from combined pages)
+import { ToeflReadingTestEdit, ToeflReadingTestCreate } from './resources/toeflReadingTests';
+import { ToeflReadingQuestionEdit, ToeflReadingQuestionCreate } from './resources/toeflReadingQuestions';
+import { ToeflListeningTestEdit, ToeflListeningTestCreate } from './resources/toeflListeningTests';
+import { ToeflListeningQuestionEdit, ToeflListeningQuestionCreate } from './resources/toeflListeningQuestions';
+
+// IELTS Combined Resources
 import { IeltsReadingList, IeltsReadingEdit, IeltsReadingCreate } from './resources/ieltsReading';
-import { IeltsReadingQuestionList, IeltsReadingQuestionEdit, IeltsReadingQuestionCreate } from './resources/ieltsReadingQuestions';
 import { IeltsListeningList, IeltsListeningEdit, IeltsListeningCreate } from './resources/ieltsListening';
-import { IeltsListeningQuestionList, IeltsListeningQuestionEdit, IeltsListeningQuestionCreate } from './resources/ieltsListeningQuestions';
 import { IeltsSpeakingList, IeltsSpeakingEdit, IeltsSpeakingCreate } from './resources/ieltsSpeaking';
 import { IeltsWritingList, IeltsWritingEdit, IeltsWritingCreate } from './resources/ieltsWriting';
+
+// IELTS Sub-resources (kept for dataProvider access)
+import { IeltsReadingQuestionEdit, IeltsReadingQuestionCreate } from './resources/ieltsReadingQuestions';
+import { IeltsListeningQuestionEdit, IeltsListeningQuestionCreate } from './resources/ieltsListeningQuestions';
 
 // Dashboard
 import Dashboard from './Dashboard';
@@ -163,25 +167,23 @@ const AdminApp = () => {
         options={{ label: 'Gallery' }}
       />
 
-      {/* TOEFL */}
+      {/* TOEFL - Combined pages */}
       <Resource
         name="toefl-reading"
         list={ToeflReadingList}
         edit={ToeflReadingEdit}
         create={ToeflReadingCreate}
-        options={{ label: 'TOEFL Reading Sections' }}
+        options={{ label: 'TOEFL Reading' }}
         recordRepresentation="name"
       />
       <Resource
         name="toefl-reading-tests"
-        list={ToeflReadingTestList}
         edit={ToeflReadingTestEdit}
         create={ToeflReadingTestCreate}
         options={{ label: 'TOEFL Reading Passages' }}
       />
       <Resource
         name="toefl-reading-questions"
-        list={ToeflReadingQuestionList}
         edit={ToeflReadingQuestionEdit}
         create={ToeflReadingQuestionCreate}
         options={{ label: 'TOEFL Reading Questions' }}
@@ -191,19 +193,17 @@ const AdminApp = () => {
         list={ToeflListeningList}
         edit={ToeflListeningEdit}
         create={ToeflListeningCreate}
-        options={{ label: 'TOEFL Listening Sections' }}
+        options={{ label: 'TOEFL Listening' }}
         recordRepresentation="name"
       />
       <Resource
         name="toefl-listening-tests"
-        list={ToeflListeningTestList}
         edit={ToeflListeningTestEdit}
         create={ToeflListeningTestCreate}
         options={{ label: 'TOEFL Listening Parts' }}
       />
       <Resource
         name="toefl-listening-questions"
-        list={ToeflListeningQuestionList}
         edit={ToeflListeningQuestionEdit}
         create={ToeflListeningQuestionCreate}
         options={{ label: 'TOEFL Listening Questions' }}
@@ -225,18 +225,17 @@ const AdminApp = () => {
         recordRepresentation="name"
       />
 
-      {/* IELTS */}
+      {/* IELTS - Combined pages */}
       <Resource
         name="ielts-reading"
         list={IeltsReadingList}
         edit={IeltsReadingEdit}
         create={IeltsReadingCreate}
-        options={{ label: 'IELTS Reading Sections' }}
+        options={{ label: 'IELTS Reading' }}
         recordRepresentation="name"
       />
       <Resource
         name="ielts-reading-questions"
-        list={IeltsReadingQuestionList}
         edit={IeltsReadingQuestionEdit}
         create={IeltsReadingQuestionCreate}
         options={{ label: 'IELTS Reading Questions' }}
@@ -246,12 +245,11 @@ const AdminApp = () => {
         list={IeltsListeningList}
         edit={IeltsListeningEdit}
         create={IeltsListeningCreate}
-        options={{ label: 'IELTS Listening Sections' }}
+        options={{ label: 'IELTS Listening' }}
         recordRepresentation="name"
       />
       <Resource
         name="ielts-listening-questions"
-        list={IeltsListeningQuestionList}
         edit={IeltsListeningQuestionEdit}
         create={IeltsListeningQuestionCreate}
         options={{ label: 'IELTS Listening Questions' }}

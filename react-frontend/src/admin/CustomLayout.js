@@ -18,9 +18,6 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import HeadphonesIcon from '@mui/icons-material/Headphones';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import EditNoteIcon from '@mui/icons-material/EditNote';
-import ArticleIcon from '@mui/icons-material/Article';
-import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
-import MusicNoteIcon from '@mui/icons-material/MusicNote';
 
 const SectionLabel = ({ children }) => {
   const [open] = useSidebarState();
@@ -68,20 +65,14 @@ const CustomMenu = () => (
     <Menu.Item to="/gallery" primaryText="Gallery" leftIcon={<PhotoLibraryIcon />} />
 
     <SectionLabel>TOEFL</SectionLabel>
-    <Menu.Item to="/toefl-reading" primaryText="Reading Sections" leftIcon={<MenuBookIcon />} />
-    <Menu.Item to="/toefl-reading-tests" primaryText="Reading Passages" leftIcon={<ArticleIcon />} />
-    <Menu.Item to="/toefl-reading-questions" primaryText="Reading Questions" leftIcon={<QuestionAnswerIcon />} />
-    <Menu.Item to="/toefl-listening" primaryText="Listening Sections" leftIcon={<HeadphonesIcon />} />
-    <Menu.Item to="/toefl-listening-tests" primaryText="Listening Parts" leftIcon={<MusicNoteIcon />} />
-    <Menu.Item to="/toefl-listening-questions" primaryText="Listening Questions" leftIcon={<QuestionAnswerIcon />} />
+    <Menu.Item to="/toefl-reading" primaryText="Reading" leftIcon={<MenuBookIcon />} />
+    <Menu.Item to="/toefl-listening" primaryText="Listening" leftIcon={<HeadphonesIcon />} />
     <Menu.Item to="/toefl-speaking" primaryText="Speaking" leftIcon={<RecordVoiceOverIcon />} />
     <Menu.Item to="/toefl-writing" primaryText="Writing" leftIcon={<EditNoteIcon />} />
 
     <SectionLabel>IELTS</SectionLabel>
-    <Menu.Item to="/ielts-reading" primaryText="Reading Sections" leftIcon={<MenuBookIcon />} />
-    <Menu.Item to="/ielts-reading-questions" primaryText="Reading Questions" leftIcon={<QuestionAnswerIcon />} />
-    <Menu.Item to="/ielts-listening" primaryText="Listening Sections" leftIcon={<HeadphonesIcon />} />
-    <Menu.Item to="/ielts-listening-questions" primaryText="Listening Questions" leftIcon={<QuestionAnswerIcon />} />
+    <Menu.Item to="/ielts-reading" primaryText="Reading" leftIcon={<MenuBookIcon />} />
+    <Menu.Item to="/ielts-listening" primaryText="Listening" leftIcon={<HeadphonesIcon />} />
     <Menu.Item to="/ielts-speaking" primaryText="Speaking" leftIcon={<RecordVoiceOverIcon />} />
     <Menu.Item to="/ielts-writing" primaryText="Writing" leftIcon={<EditNoteIcon />} />
   </Menu>
