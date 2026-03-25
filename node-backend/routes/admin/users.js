@@ -50,7 +50,7 @@ router.get('/', async (req, res) => {
     const data = await sequelize.query(`
       SELECT u.id, u.email, u.user_name, u.first_name, u.last_name, u.block, u.created_date, u.avatar,
              CASE WHEN u.block = 0 THEN 1 ELSE 0 END as status,
-             COALESCE(MAX(m.level), 0) as membership_level
+             CASE WHEN MAX(m.vip) = 1 THEN 2 WHEN MAX(m.id) IS NOT NULL THEN 1 ELSE 0 END as membership_level
       FROM users u
       LEFT JOIN user_has_membership uhm ON uhm.user_id = u.id
       LEFT JOIN membership m ON m.id = uhm.membership_id AND m.status = 1
@@ -76,7 +76,7 @@ router.get('/:id', async (req, res) => {
     const [user] = await sequelize.query(`
       SELECT u.id, u.email, u.user_name, u.first_name, u.last_name, u.block, u.created_date, u.avatar, u.gender, u.dob,
              CASE WHEN u.block = 0 THEN 1 ELSE 0 END as status,
-             COALESCE(MAX(m.level), 0) as membership_level,
+             CASE WHEN MAX(m.vip) = 1 THEN 2 WHEN MAX(m.id) IS NOT NULL THEN 1 ELSE 0 END as membership_level,
              uhm.membership_id
       FROM users u
       LEFT JOIN user_has_membership uhm ON uhm.user_id = u.id

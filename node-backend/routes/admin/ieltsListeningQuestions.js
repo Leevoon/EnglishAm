@@ -46,7 +46,7 @@ router.get('/', async (req, res) => {
 
         const dataQuery = `
             SELECT ilq.id, ilq.ielts_listening_id, ilq.question, ilq.sentences, ilq.listening_audio, ilq.sort_order,
-                   (SELECT COUNT(*) FROM ielts_listening_question_answer WHERE ielts_listening_question_id = ilq.id) as answer_count
+                   (SELECT COUNT(*) FROM ielts_listening_question_answer WHERE ielts_reading_question_id = ilq.id) as answer_count
             FROM ielts_listening_question ilq
             WHERE 1=1 ${where}
             ORDER BY ilq.${sortField} ${sortOrder}
@@ -87,9 +87,9 @@ router.get('/:id', async (req, res) => {
         }
 
         const answers = await sequelize.query(
-            `SELECT id, ielts_listening_question_id, answer, true_false
+            `SELECT id, ielts_reading_question_id as ielts_listening_question_id, answer, true_false
              FROM ielts_listening_question_answer
-             WHERE ielts_listening_question_id = :id
+             WHERE ielts_reading_question_id = :id
              ORDER BY id ASC`,
             {
                 replacements: { id: req.params.id },
@@ -133,11 +133,11 @@ router.post('/', async (req, res) => {
         if (answers && answers.length > 0) {
             for (const answer of answers) {
                 await sequelize.query(
-                    `INSERT INTO ielts_listening_question_answer (ielts_listening_question_id, answer, true_false)
-                     VALUES (:ielts_listening_question_id, :answer, :true_false)`,
+                    `INSERT INTO ielts_listening_question_answer (ielts_reading_question_id, answer, true_false)
+                     VALUES (:ielts_reading_question_id, :answer, :true_false)`,
                     {
                         replacements: {
-                            ielts_listening_question_id: insertId,
+                            ielts_reading_question_id: insertId,
                             answer: answer.answer || '',
                             true_false: answer.true_false || 0
                         },
@@ -186,18 +186,18 @@ router.put('/:id', async (req, res) => {
 
         // Delete old answers and insert new ones
         await sequelize.query(
-            'DELETE FROM ielts_listening_question_answer WHERE ielts_listening_question_id = :id',
+            'DELETE FROM ielts_listening_question_answer WHERE ielts_reading_question_id = :id',
             { replacements: { id }, type: QueryTypes.DELETE, transaction: t }
         );
 
         if (answers && answers.length > 0) {
             for (const answer of answers) {
                 await sequelize.query(
-                    `INSERT INTO ielts_listening_question_answer (ielts_listening_question_id, answer, true_false)
-                     VALUES (:ielts_listening_question_id, :answer, :true_false)`,
+                    `INSERT INTO ielts_listening_question_answer (ielts_reading_question_id, answer, true_false)
+                     VALUES (:ielts_reading_question_id, :answer, :true_false)`,
                     {
                         replacements: {
-                            ielts_listening_question_id: id,
+                            ielts_reading_question_id: id,
                             answer: answer.answer || '',
                             true_false: answer.true_false || 0
                         },
@@ -225,7 +225,7 @@ router.delete('/:id', async (req, res) => {
         const id = req.params.id;
 
         await sequelize.query(
-            'DELETE FROM ielts_listening_question_answer WHERE ielts_listening_question_id = :id',
+            'DELETE FROM ielts_listening_question_answer WHERE ielts_reading_question_id = :id',
             { replacements: { id }, type: QueryTypes.DELETE, transaction: t }
         );
 

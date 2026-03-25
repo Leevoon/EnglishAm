@@ -20,12 +20,12 @@ MembershipLevelField.defaultProps = { label: 'Membership' };
 const MembershipInput = () => {
   const { data: plans } = useGetList('membership-plans', {
     pagination: { page: 1, perPage: 100 },
-    sort: { field: 'level', order: 'ASC' },
+    sort: { field: 'sort_ortder', order: 'ASC' },
     filter: {},
   });
   const choices = [
     { id: 0, name: 'Free (No Membership)' },
-    ...(plans || []).map(p => ({ id: p.id, name: `${p.name || 'Plan ' + p.id} (Level ${p.level})` })),
+    ...(plans || []).map(p => ({ id: p.id, name: `${p.name || 'Plan ' + p.id}${p.vip ? ' (VIP)' : ''}` })),
   ];
   return <SelectInput source="membership_id" choices={choices} label="Membership Plan" />;
 };

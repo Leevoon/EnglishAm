@@ -3,7 +3,7 @@ const router = express.Router();
 const sequelize = require('../../config/database');
 const { QueryTypes } = require('sequelize');
 
-const ALLOWED_SORT_FIELDS = ['id', 'name', 'price', 'level', 'vip', 'status', 'sort_ortder'];
+const ALLOWED_SORT_FIELDS = ['id', 'name', 'price', 'vip', 'status', 'sort_ortder'];
 
 const buildQuery = (req) => {
     const page = parseInt(req.query.page) || 1;
@@ -32,12 +32,8 @@ router.get('/', async (req, res) => {
             replacements.status = filter.status;
         }
         if (filter.name) {
-            whereClause += ' AND ml.name LIKE :name';
+            whereClause += ' AND ml.title LIKE :name';
             replacements.name = `%${filter.name}%`;
-        }
-        if (filter.level !== undefined && filter.level !== '') {
-            whereClause += ' AND m.level = :level';
-            replacements.level = filter.level;
         }
         if (filter.vip !== undefined && filter.vip !== '') {
             whereClause += ' AND m.vip = :vip';
@@ -52,7 +48,7 @@ router.get('/', async (req, res) => {
         `;
 
         const dataQuery = `
-            SELECT m.id, ml.name, m.price, m.level, m.vip, m.status, m.sort_ortder
+            SELECT m.id, ml.title as name, m.price, m.vip, m.status, m.sort_ortder
             FROM membership m
             LEFT JOIN membership_label ml ON ml.membership_id = m.id AND ml.language_id = 1
             WHERE 1=1 ${whereClause}
@@ -82,7 +78,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const query = `
-            SELECT m.id, ml.name, m.price, m.level, m.vip, m.status, m.sort_ortder, ml.description
+            SELECT m.id, ml.title as name, m.price, m.vip, m.status, m.sort_ortder, ml.description
             FROM membership m
             LEFT JOIN membership_label ml ON ml.membership_id = m.id AND ml.language_id = 1
             WHERE m.id = :id
@@ -108,14 +104,13 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
-        const { name, description, price, level, vip, status, sort_ortder } = req.body;
+        const { name, description, price, vip, status, sort_ortder } = req.body;
 
         const [membershipResult] = await sequelize.query(
-            `INSERT INTO membership (price, level, vip, status, sort_ortder) VALUES (:price, :level, :vip, :status, :sort_ortder)`,
+            `INSERT INTO membership (price, vip, status, sort_ortder) VALUES (:price, :vip, :status, :sort_ortder)`,
             {
                 replacements: {
                     price: price || 0,
-                    level: level || 0,
                     vip: vip || 0,
                     status: status !== undefined ? status : 1,
                     sort_ortder: sort_ortder || 0
@@ -128,7 +123,7 @@ router.post('/', async (req, res) => {
         const membershipId = membershipResult;
 
         await sequelize.query(
-            `INSERT INTO membership_label (membership_id, language_id, name, description) VALUES (:membership_id, 1, :name, :description)`,
+            `INSERT INTO membership_label (membership_id, language_id, title, description) VALUES (:membership_id, 1, :name, :description)`,
             {
                 replacements: { membership_id: membershipId, name: name || '', description: description || '' },
                 type: QueryTypes.INSERT,
@@ -138,7 +133,7 @@ router.post('/', async (req, res) => {
 
         await transaction.commit();
 
-        res.status(201).json({ data: { id: membershipId, name, description, price, level, vip, status, sort_ortder } });
+        res.status(201).json({ data: { id: membershipId, name, description, price, vip, status, sort_ortder } });
     } catch (error) {
         await transaction.rollback();
         console.error('Error creating membership plan:', error);
@@ -150,16 +145,15 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
-        const { name, description, price, level, vip, status, sort_ortder } = req.body;
+        const { name, description, price, vip, status, sort_ortder } = req.body;
         const id = req.params.id;
 
         await sequelize.query(
-            `UPDATE membership SET price = :price, level = :level, vip = :vip, status = :status, sort_ortder = :sort_ortder WHERE id = :id`,
+            `UPDATE membership SET price = :price, vip = :vip, status = :status, sort_ortder = :sort_ortder WHERE id = :id`,
             {
                 replacements: {
                     id,
                     price: price || 0,
-                    level: level || 0,
                     vip: vip || 0,
                     status: status !== undefined ? status : 1,
                     sort_ortder: sort_ortder || 0
@@ -180,7 +174,7 @@ router.put('/:id', async (req, res) => {
 
         if (existingLabel) {
             await sequelize.query(
-                `UPDATE membership_label SET name = :name, description = :description WHERE membership_id = :membership_id AND language_id = 1`,
+                `UPDATE membership_label SET title = :name, description = :description WHERE membership_id = :membership_id AND language_id = 1`,
                 {
                     replacements: { membership_id: id, name: name || '', description: description || '' },
                     type: QueryTypes.UPDATE,
@@ -189,7 +183,7 @@ router.put('/:id', async (req, res) => {
             );
         } else {
             await sequelize.query(
-                `INSERT INTO membership_label (membership_id, language_id, name, description) VALUES (:membership_id, 1, :name, :description)`,
+                `INSERT INTO membership_label (membership_id, language_id, title, description) VALUES (:membership_id, 1, :name, :description)`,
                 {
                     replacements: { membership_id: id, name: name || '', description: description || '' },
                     type: QueryTypes.INSERT,
@@ -200,7 +194,7 @@ router.put('/:id', async (req, res) => {
 
         await transaction.commit();
 
-        res.json({ data: { id, name, description, price, level, vip, status, sort_ortder } });
+        res.json({ data: { id, name, description, price, vip, status, sort_ortder } });
     } catch (error) {
         await transaction.rollback();
         console.error('Error updating membership plan:', error);

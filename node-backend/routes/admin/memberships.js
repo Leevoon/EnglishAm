@@ -3,12 +3,12 @@ const router = express.Router();
 const sequelize = require('../../config/database');
 const { QueryTypes } = require('sequelize');
 
-const ALLOWED_SORT_FIELDS = ['id', 'membership_id', 'test_id', 'type', 'membership_name', 'membership_level'];
+const ALLOWED_SORT_FIELDS = ['membership_id', 'test_id', 'type', 'membership_name'];
 
 const buildQuery = (req) => {
     const page = parseInt(req.query.page) || 1;
     const perPage = Math.min(parseInt(req.query.perPage) || 10, 100);
-    const sortField = ALLOWED_SORT_FIELDS.includes(req.query.sortField) ? req.query.sortField : 'id';
+    const sortField = ALLOWED_SORT_FIELDS.includes(req.query.sortField) ? req.query.sortField : 'mht.membership_id';
     const sortOrder = req.query.sortOrder === 'DESC' ? 'DESC' : 'ASC';
     const filter = req.query.filter ? JSON.parse(req.query.filter) : {};
     return { page, perPage, sortField, sortOrder, filter };
@@ -23,10 +23,6 @@ router.get('/', async (req, res) => {
         let whereClause = '';
         const replacements = {};
 
-        if (filter.id) {
-            whereClause += ' AND mht.id = :id';
-            replacements.id = filter.id;
-        }
         if (filter.membership_id) {
             whereClause += ' AND mht.membership_id = :membership_id';
             replacements.membership_id = filter.membership_id;
@@ -49,8 +45,9 @@ router.get('/', async (req, res) => {
         `;
 
         const dataQuery = `
-            SELECT mht.id, mht.membership_id, mht.test_id, mht.type,
-                   ml.name as membership_name, m.level as membership_level
+            SELECT CONCAT(mht.membership_id, '-', mht.test_id, '-', mht.type) as id,
+                   mht.membership_id, mht.test_id, mht.type,
+                   ml.title as membership_name, m.vip as membership_vip
             FROM membership_has_test mht
             LEFT JOIN membership m ON m.id = mht.membership_id
             LEFT JOIN membership_label ml ON ml.membership_id = m.id AND ml.language_id = 1
@@ -77,20 +74,27 @@ router.get('/', async (req, res) => {
     }
 });
 
-// GET single
+// GET single - id is "membership_id-test_id-type"
 router.get('/:id', async (req, res) => {
     try {
+        const parts = req.params.id.split('-');
+        if (parts.length < 3) {
+            return res.status(400).json({ error: 'Invalid ID format' });
+        }
+        const [membership_id, test_id, type] = parts;
+
         const query = `
-            SELECT mht.id, mht.membership_id, mht.test_id, mht.type,
-                   ml.name as membership_name, m.level as membership_level
+            SELECT CONCAT(mht.membership_id, '-', mht.test_id, '-', mht.type) as id,
+                   mht.membership_id, mht.test_id, mht.type,
+                   ml.title as membership_name, m.vip as membership_vip
             FROM membership_has_test mht
             LEFT JOIN membership m ON m.id = mht.membership_id
             LEFT JOIN membership_label ml ON ml.membership_id = m.id AND ml.language_id = 1
-            WHERE mht.id = :id
+            WHERE mht.membership_id = :membership_id AND mht.test_id = :test_id AND mht.type = :type
         `;
 
         const [result] = await sequelize.query(query, {
-            replacements: { id: req.params.id },
+            replacements: { membership_id, test_id, type },
             type: QueryTypes.SELECT
         });
 
@@ -110,7 +114,7 @@ router.post('/', async (req, res) => {
     try {
         const { membership_id, test_id, type } = req.body;
 
-        const [result] = await sequelize.query(
+        await sequelize.query(
             `INSERT INTO membership_has_test (membership_id, test_id, type) VALUES (:membership_id, :test_id, :type)`,
             {
                 replacements: {
@@ -122,7 +126,7 @@ router.post('/', async (req, res) => {
             }
         );
 
-        const id = result;
+        const id = `${membership_id}-${test_id}-${type}`;
 
         res.status(201).json({ data: { id, membership_id, test_id, type } });
     } catch (error) {
@@ -131,25 +135,38 @@ router.post('/', async (req, res) => {
     }
 });
 
-// PUT update
+// PUT update - id is "membership_id-test_id-type"
 router.put('/:id', async (req, res) => {
     try {
+        const parts = req.params.id.split('-');
+        if (parts.length < 3) {
+            return res.status(400).json({ error: 'Invalid ID format' });
+        }
+        const [old_membership_id, old_test_id, old_type] = parts;
         const { membership_id, test_id, type } = req.body;
-        const id = req.params.id;
+
+        // Delete old and insert new (no PK to update by)
+        await sequelize.query(
+            `DELETE FROM membership_has_test WHERE membership_id = :old_mid AND test_id = :old_tid AND type = :old_type`,
+            {
+                replacements: { old_mid: old_membership_id, old_tid: old_test_id, old_type },
+                type: QueryTypes.DELETE
+            }
+        );
 
         await sequelize.query(
-            `UPDATE membership_has_test SET membership_id = :membership_id, test_id = :test_id, type = :type WHERE id = :id`,
+            `INSERT INTO membership_has_test (membership_id, test_id, type) VALUES (:membership_id, :test_id, :type)`,
             {
                 replacements: {
-                    id,
                     membership_id: membership_id || null,
                     test_id: test_id || null,
                     type: type || null
                 },
-                type: QueryTypes.UPDATE
+                type: QueryTypes.INSERT
             }
         );
 
+        const id = `${membership_id}-${test_id}-${type}`;
         res.json({ data: { id, membership_id, test_id, type } });
     } catch (error) {
         console.error('Error updating membership assignment:', error);
@@ -157,20 +174,24 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// DELETE
+// DELETE - id is "membership_id-test_id-type"
 router.delete('/:id', async (req, res) => {
     try {
-        const id = req.params.id;
+        const parts = req.params.id.split('-');
+        if (parts.length < 3) {
+            return res.status(400).json({ error: 'Invalid ID format' });
+        }
+        const [membership_id, test_id, type] = parts;
 
         await sequelize.query(
-            `DELETE FROM membership_has_test WHERE id = :id`,
+            `DELETE FROM membership_has_test WHERE membership_id = :membership_id AND test_id = :test_id AND type = :type`,
             {
-                replacements: { id },
+                replacements: { membership_id, test_id, type },
                 type: QueryTypes.DELETE
             }
         );
 
-        res.json({ data: { id } });
+        res.json({ data: { id: req.params.id } });
     } catch (error) {
         console.error('Error deleting membership assignment:', error);
         res.status(500).json({ error: 'Internal server error' });

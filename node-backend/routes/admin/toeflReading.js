@@ -46,7 +46,8 @@ router.get('/', async (req, res) => {
       FROM toefl_reading tr
       LEFT JOIN toefl_reading_label trl ON trl.toefl_reading_id = tr.id AND trl.language_id = 1
       LEFT JOIN (
-        SELECT mht.test_id, MIN(m.level) as required_level
+        SELECT mht.test_id,
+          CASE WHEN MAX(m.vip) = 1 THEN 2 ELSE 1 END as required_level
         FROM membership_has_test mht
         JOIN membership m ON mht.membership_id = m.id
         WHERE mht.type = 1 AND m.status = 1
@@ -81,7 +82,8 @@ router.get('/:id', async (req, res) => {
       FROM toefl_reading tr
       LEFT JOIN toefl_reading_label trl ON trl.toefl_reading_id = tr.id AND trl.language_id = 1
       LEFT JOIN (
-        SELECT mht.test_id, MIN(m.level) as required_level
+        SELECT mht.test_id,
+          CASE WHEN MAX(m.vip) = 1 THEN 2 ELSE 1 END as required_level
         FROM membership_has_test mht
         JOIN membership m ON mht.membership_id = m.id
         WHERE mht.type = 1 AND m.status = 1
@@ -193,9 +195,10 @@ router.put('/:id', async (req, res) => {
         { replacements: { id }, type: QueryTypes.DELETE, transaction: t }
       );
       if (parseInt(required_level) > 0) {
+        // Find membership by vip flag: level 2 (Gold) = vip=1, level 1 (Silver) = vip=0
         const [membership] = await sequelize.query(
-          `SELECT id FROM membership WHERE level = :level AND status = 1 ORDER BY id ASC LIMIT 1`,
-          { replacements: { level: parseInt(required_level) }, type: QueryTypes.SELECT, transaction: t }
+          `SELECT id FROM membership WHERE vip = :vip AND status = 1 ORDER BY id ASC LIMIT 1`,
+          { replacements: { vip: parseInt(required_level) >= 2 ? 1 : 0 }, type: QueryTypes.SELECT, transaction: t }
         );
         if (membership) {
           await sequelize.query(
