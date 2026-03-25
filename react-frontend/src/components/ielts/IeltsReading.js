@@ -299,12 +299,12 @@ const IeltsReading = () => {
         <div className="tests-list">
           {tests.length > 0 ? (
             tests.map((test) => (
-              <div key={test.id} className={`test-item${test.locked ? ' test-locked' : ''}`} onClick={() => handleTestSelect(test.id)}>
+              <div key={test.id} className={`test-item${test.locked ? ` test-locked level-${test.required_level}` : ''}`} onClick={() => handleTestSelect(test.id)}>
                 <h3>
-                  {test.locked && <span className="lock-icon" title={`Requires ${LEVEL_NAMES[test.required_level] || 'Premium'} membership`}>&#128274; </span>}
+                  {test.locked && <span className={`lock-icon level-${test.required_level}`} title={`Requires ${LEVEL_NAMES[test.required_level] || 'Premium'} membership`}>&#128274; </span>}
                   {test.name || `Test ${test.id}`}
                 </h3>
-                {test.locked && <span className="membership-badge">{LEVEL_NAMES[test.required_level] || 'Premium'}</span>}
+                {test.locked && <span className={`membership-badge level-${test.required_level}`}>{LEVEL_NAMES[test.required_level] || 'Premium'}</span>}
               </div>
             ))
           ) : (
