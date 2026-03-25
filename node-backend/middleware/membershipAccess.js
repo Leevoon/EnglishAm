@@ -19,7 +19,7 @@ async function getUserMembershipLevel(userId) {
   if (!userId) return 0;
 
   const [result] = await sequelize.query(`
-    SELECT MAX(m.level) as max_level
+    SELECT CASE WHEN MAX(m.vip) = 1 THEN 2 WHEN MAX(m.id) IS NOT NULL THEN 1 ELSE 0 END as max_level
     FROM user_has_membership uhm
     JOIN membership m ON uhm.membership_id = m.id
     WHERE uhm.user_id = :userId AND m.status = 1
@@ -38,7 +38,7 @@ async function getRequiredLevel(testId, contentType) {
   if (typeCode === undefined) return 0;
 
   const [result] = await sequelize.query(`
-    SELECT MIN(m.level) as min_level
+    SELECT CASE WHEN MAX(m.vip) = 1 THEN 2 ELSE 1 END as min_level
     FROM membership_has_test mht
     JOIN membership m ON mht.membership_id = m.id
     WHERE mht.test_id = :testId AND mht.type = :typeCode AND m.status = 1
@@ -104,7 +104,7 @@ async function annotateListWithAccess(items, contentType, userId) {
 
   // Get all restrictions for this content type
   const restrictions = await sequelize.query(`
-    SELECT mht.test_id, MIN(m.level) as required_level
+    SELECT mht.test_id, CASE WHEN MAX(m.vip) = 1 THEN 2 ELSE 1 END as required_level
     FROM membership_has_test mht
     JOIN membership m ON mht.membership_id = m.id
     WHERE mht.type = :typeCode AND m.status = 1
