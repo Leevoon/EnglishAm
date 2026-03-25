@@ -38,7 +38,7 @@ async function getRequiredLevel(testId, contentType) {
   if (typeCode === undefined) return 0;
 
   const [result] = await sequelize.query(`
-    SELECT CASE WHEN MAX(m.vip) = 1 THEN 2 ELSE 1 END as min_level
+    SELECT CASE WHEN MAX(m.id) IS NULL THEN 0 WHEN MAX(m.vip) = 1 THEN 2 ELSE 1 END as min_level
     FROM membership_has_test mht
     JOIN membership m ON mht.membership_id = m.id
     WHERE mht.test_id = :testId AND mht.type = :typeCode AND m.status = 1
