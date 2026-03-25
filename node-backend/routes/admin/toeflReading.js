@@ -41,9 +41,17 @@ router.get('/', async (req, res) => {
     `;
 
     const dataQuery = `
-      SELECT tr.id, trl.name, tr.status, tr.sort_order, tr.created_date
+      SELECT tr.id, trl.name, tr.status, tr.sort_order, tr.created_date,
+             COALESCE(rl.required_level, 0) as required_level
       FROM toefl_reading tr
       LEFT JOIN toefl_reading_label trl ON trl.toefl_reading_id = tr.id AND trl.language_id = 1
+      LEFT JOIN (
+        SELECT mht.test_id, MIN(m.level) as required_level
+        FROM membership_has_test mht
+        JOIN membership m ON mht.membership_id = m.id
+        WHERE mht.type = 1 AND m.status = 1
+        GROUP BY mht.test_id
+      ) rl ON rl.test_id = tr.id
       WHERE 1=1 ${where}
       ORDER BY ${sortField === 'name' ? 'trl.name' : 'tr.' + sortField} ${sortOrder}
       LIMIT :limit OFFSET :offset
@@ -68,9 +76,17 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const query = `
-      SELECT tr.id, trl.name, tr.status, tr.sort_order, tr.created_date
+      SELECT tr.id, trl.name, tr.status, tr.sort_order, tr.created_date,
+             COALESCE(rl.required_level, 0) as required_level
       FROM toefl_reading tr
       LEFT JOIN toefl_reading_label trl ON trl.toefl_reading_id = tr.id AND trl.language_id = 1
+      LEFT JOIN (
+        SELECT mht.test_id, MIN(m.level) as required_level
+        FROM membership_has_test mht
+        JOIN membership m ON mht.membership_id = m.id
+        WHERE mht.type = 1 AND m.status = 1
+        GROUP BY mht.test_id
+      ) rl ON rl.test_id = tr.id
       WHERE tr.id = :id
     `;
     const [result] = await sequelize.query(query, {
@@ -129,7 +145,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   const t = await sequelize.transaction();
   try {
-    const { name, status, sort_order } = req.body;
+    const { name, status, sort_order, required_level } = req.body;
     const id = req.params.id;
 
     await sequelize.query(
@@ -170,9 +186,29 @@ router.put('/:id', async (req, res) => {
       );
     }
 
+    // Update required access level
+    if (required_level !== undefined) {
+      await sequelize.query(
+        `DELETE FROM membership_has_test WHERE test_id = :id AND type = 1`,
+        { replacements: { id }, type: QueryTypes.DELETE, transaction: t }
+      );
+      if (parseInt(required_level) > 0) {
+        const [membership] = await sequelize.query(
+          `SELECT id FROM membership WHERE level = :level AND status = 1 ORDER BY id ASC LIMIT 1`,
+          { replacements: { level: parseInt(required_level) }, type: QueryTypes.SELECT, transaction: t }
+        );
+        if (membership) {
+          await sequelize.query(
+            `INSERT INTO membership_has_test (membership_id, test_id, type) VALUES (:membership_id, :test_id, 1)`,
+            { replacements: { membership_id: membership.id, test_id: id }, type: QueryTypes.INSERT, transaction: t }
+          );
+        }
+      }
+    }
+
     await t.commit();
 
-    res.json({ id: parseInt(id), name, status, sort_order });
+    res.json({ id: parseInt(id), name, status, sort_order, required_level: parseInt(required_level) || 0 });
   } catch (error) {
     await t.rollback();
     console.error('Error updating toefl reading:', error);

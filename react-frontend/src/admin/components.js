@@ -20,6 +20,17 @@ import StarterKit from '@tiptap/starter-kit';
 export const stripHtml = (html) =>
   (html || '').replace(/<[^>]*>/g, '').replace(/&[^;]+;/g, ' ').replace(/\s+/g, ' ').trim();
 
+export const ACCESS_LEVELS = [
+  { value: 0, label: 'Free', color: 'default' },
+  { value: 1, label: 'Silver', color: 'info' },
+  { value: 2, label: 'Gold', color: 'warning' },
+];
+
+export const AccessLevelChip = ({ level }) => {
+  const al = ACCESS_LEVELS.find(a => a.value === (level || 0)) || ACCESS_LEVELS[0];
+  return <Chip label={al.label} size="small" color={al.color} variant={level > 0 ? 'filled' : 'outlined'} />;
+};
+
 // === React-Admin Field Components ===
 
 export const StatusField = ({ source = 'status' }) => {
@@ -90,6 +101,16 @@ export const RichTextEditor = ({ initialValue, onChange }) => {
   const editor = useEditor({
     extensions: [StarterKit],
     content: initialValue || '',
+    editorProps: {
+      transformPastedHTML(html) {
+        const cleaned = html.replace(/<meta[^>]*>/g, '').trim();
+        const pMatches = cleaned.match(/<p[^>]*>/g);
+        if (pMatches && pMatches.length === 1 && /^<p[^>]*>([\s\S]*)<\/p>$/.test(cleaned)) {
+          return cleaned.replace(/^<p[^>]*>([\s\S]*)<\/p>$/, '$1');
+        }
+        return html;
+      },
+    },
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
     },

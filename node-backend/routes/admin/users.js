@@ -22,38 +22,41 @@ router.get('/', async (req, res) => {
     const { page, perPage, sortField, sortOrder, filter } = buildQuery(req);
     const offset = (page - 1) * perPage;
 
-    let whereClause = '';
     const replacements = {};
+    const conditions = [];
 
     if (filter.q) {
-      whereClause = 'WHERE email LIKE :search OR first_name LIKE :search OR last_name LIKE :search OR user_name LIKE :search';
+      conditions.push('(u.email LIKE :search OR u.first_name LIKE :search OR u.last_name LIKE :search OR u.user_name LIKE :search)');
       replacements.search = `%${filter.q}%`;
     }
 
     if (filter.status !== undefined) {
-      const block = filter.status === 1 ? 0 : 1;
-      whereClause = whereClause
-        ? `${whereClause} AND block = :block`
-        : 'WHERE block = :block';
-      replacements.block = block;
+      conditions.push('u.block = :block');
+      replacements.block = filter.status === 1 ? 0 : 1;
     }
 
     if (filter.ids) {
       const ids = JSON.parse(filter.ids);
-      whereClause = whereClause ? `${whereClause} AND id IN (:ids)` : 'WHERE id IN (:ids)';
+      conditions.push('u.id IN (:ids)');
       replacements.ids = ids;
     }
 
+    const whereClause = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
+
     const [countResult] = await sequelize.query(`
-      SELECT COUNT(*) as total FROM users ${whereClause}
+      SELECT COUNT(*) as total FROM users u ${whereClause}
     `, { replacements, type: QueryTypes.SELECT });
 
     const data = await sequelize.query(`
-      SELECT id, email, user_name, first_name, last_name, block, created_date, avatar,
-             CASE WHEN block = 0 THEN 1 ELSE 0 END as status
-      FROM users
+      SELECT u.id, u.email, u.user_name, u.first_name, u.last_name, u.block, u.created_date, u.avatar,
+             CASE WHEN u.block = 0 THEN 1 ELSE 0 END as status,
+             COALESCE(MAX(m.level), 0) as membership_level
+      FROM users u
+      LEFT JOIN user_has_membership uhm ON uhm.user_id = u.id
+      LEFT JOIN membership m ON m.id = uhm.membership_id AND m.status = 1
       ${whereClause}
-      ORDER BY ${sortField} ${sortOrder}
+      GROUP BY u.id
+      ORDER BY u.${sortField} ${sortOrder}
       LIMIT :limit OFFSET :offset
     `, {
       replacements: { ...replacements, limit: perPage, offset },
@@ -71,9 +74,15 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const [user] = await sequelize.query(`
-      SELECT id, email, user_name, first_name, last_name, block, created_date, avatar, gender, dob,
-             CASE WHEN block = 0 THEN 1 ELSE 0 END as status
-      FROM users WHERE id = :id
+      SELECT u.id, u.email, u.user_name, u.first_name, u.last_name, u.block, u.created_date, u.avatar, u.gender, u.dob,
+             CASE WHEN u.block = 0 THEN 1 ELSE 0 END as status,
+             COALESCE(MAX(m.level), 0) as membership_level,
+             uhm.membership_id
+      FROM users u
+      LEFT JOIN user_has_membership uhm ON uhm.user_id = u.id
+      LEFT JOIN membership m ON m.id = uhm.membership_id AND m.status = 1
+      WHERE u.id = :id
+      GROUP BY u.id, uhm.membership_id
     `, {
       replacements: { id: req.params.id },
       type: QueryTypes.SELECT
@@ -130,7 +139,7 @@ router.post('/', async (req, res) => {
 // PUT - Update user
 router.put('/:id', async (req, res) => {
   try {
-    const { email, password, user_name, first_name, last_name, status } = req.body;
+    const { email, password, user_name, first_name, last_name, status, membership_id } = req.body;
     const id = req.params.id;
 
     let passwordUpdate = '';
@@ -161,7 +170,21 @@ router.put('/:id', async (req, res) => {
       type: QueryTypes.UPDATE
     });
 
-    res.json({ id, email, user_name, first_name, last_name, status });
+    // Update membership assignment
+    if (membership_id !== undefined) {
+      await sequelize.query(
+        `DELETE FROM user_has_membership WHERE user_id = :id`,
+        { replacements: { id }, type: QueryTypes.DELETE }
+      );
+      if (membership_id && parseInt(membership_id) > 0) {
+        await sequelize.query(
+          `INSERT INTO user_has_membership (user_id, membership_id) VALUES (:user_id, :membership_id)`,
+          { replacements: { user_id: id, membership_id: parseInt(membership_id) }, type: QueryTypes.INSERT }
+        );
+      }
+    }
+
+    res.json({ id, email, user_name, first_name, last_name, status, membership_id });
   } catch (error) {
     console.error('Error updating user:', error);
     res.status(500).json({ message: 'Server error' });

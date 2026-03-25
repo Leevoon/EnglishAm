@@ -7,18 +7,20 @@ import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
   Box, Card, CardContent, CardHeader, Typography, Chip,
   Table, TableHead, TableBody, TableRow, TableCell,
-  TextField, Button, Switch, FormControlLabel,
+  TextField, Button, Switch, FormControlLabel, MenuItem,
   Stack, CircularProgress, Alert,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
-import { stripHtml, QuestionAccordion } from '../../components';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { stripHtml, QuestionAccordion, AccessLevelChip, ACCESS_LEVELS } from '../../components';
 
 // === COMBINED LIST ===
 export const ToeflListeningList = () => {
   const dataProvider = useDataProvider();
+  const notify = useNotify();
   const navigate = useNavigate();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +48,16 @@ export const ToeflListeningList = () => {
     fetchAll().catch(() => setLoading(false));
   }, [dataProvider]);
 
+  const handleDelete = async (e, row) => {
+    e.stopPropagation();
+    if (!window.confirm(`Delete section "${row.name}" and all its parts/questions?`)) return;
+    try {
+      await dataProvider.delete('toefl-listening', { id: row.id, previousData: row });
+      setRows(prev => prev.filter(r => r.id !== row.id));
+      notify('Section deleted', { type: 'success' });
+    } catch (err) { notify('Error deleting section', { type: 'error' }); }
+  };
+
   if (loading) return <Box sx={{ p: 4, textAlign: 'center' }}><CircularProgress /></Box>;
 
   return (
@@ -65,9 +77,10 @@ export const ToeflListeningList = () => {
               <TableCell width={180}>Section Name</TableCell>
               <TableCell>Audio</TableCell>
               <TableCell width={90} align="center">Questions</TableCell>
+              <TableCell width={80} align="center">Access</TableCell>
               <TableCell width={80} align="center">Status</TableCell>
               <TableCell width={60} align="center">Order</TableCell>
-              <TableCell width={60}></TableCell>
+              <TableCell width={90}></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -82,14 +95,22 @@ export const ToeflListeningList = () => {
                   <Chip label={row.questionCount} size="small" color={row.questionCount > 0 ? 'primary' : 'default'} variant={row.questionCount > 0 ? 'filled' : 'outlined'} />
                 </TableCell>
                 <TableCell align="center">
+                  <AccessLevelChip level={row.required_level} />
+                </TableCell>
+                <TableCell align="center">
                   <Chip label={row.status === 1 ? 'Active' : 'Inactive'} color={row.status === 1 ? 'success' : 'default'} size="small" variant={row.status === 1 ? 'filled' : 'outlined'} />
                 </TableCell>
                 <TableCell align="center">{row.sort_order}</TableCell>
-                <TableCell><EditIcon fontSize="small" color="action" /></TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={0.5}>
+                    <EditIcon fontSize="small" color="action" />
+                    <DeleteIcon fontSize="small" color="error" sx={{ cursor: 'pointer' }} onClick={(e) => handleDelete(e, row)} />
+                  </Stack>
+                </TableCell>
               </TableRow>
             ))}
             {rows.length === 0 && (
-              <TableRow><TableCell colSpan={7} align="center" sx={{ py: 4 }}><Typography color="text.secondary">No sections found</Typography></TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} align="center" sx={{ py: 4 }}><Typography color="text.secondary">No sections found</Typography></TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -224,6 +245,9 @@ export const ToeflListeningEdit = () => {
             <TextField label="Name" value={section.name || ''} onChange={e => setSection(prev => ({ ...prev, name: e.target.value }))} fullWidth />
             <Stack direction="row" spacing={2} alignItems="center">
               <TextField label="Sort Order" type="number" value={section.sort_order ?? 0} onChange={e => setSection(prev => ({ ...prev, sort_order: parseInt(e.target.value) || 0 }))} sx={{ width: 150 }} />
+              <TextField select label="Access Level" value={section.required_level ?? 0} onChange={e => setSection(prev => ({ ...prev, required_level: parseInt(e.target.value) }))} sx={{ width: 150 }}>
+                {ACCESS_LEVELS.map(al => <MenuItem key={al.value} value={al.value}>{al.label}</MenuItem>)}
+              </TextField>
               <FormControlLabel
                 control={<Switch checked={section.status === 1} onChange={e => setSection(prev => ({ ...prev, status: e.target.checked ? 1 : 0 }))} />}
                 label={section.status === 1 ? 'Active' : 'Inactive'}

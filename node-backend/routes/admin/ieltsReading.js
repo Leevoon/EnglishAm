@@ -41,9 +41,17 @@ router.get('/', async (req, res) => {
         `;
 
         const dataQuery = `
-            SELECT ir.id, irl.name, ir.status, ir.sort_order, ir.created_date
+            SELECT ir.id, irl.name, ir.status, ir.sort_order, ir.created_date,
+                   COALESCE(rl.required_level, 0) as required_level
             FROM ielts_reading ir
             LEFT JOIN ielts_reading_label irl ON ir.id = irl.ielts_reading_id AND irl.language_id = 1
+            LEFT JOIN (
+              SELECT mht.test_id, MIN(m.level) as required_level
+              FROM membership_has_test mht
+              JOIN membership m ON mht.membership_id = m.id
+              WHERE mht.type = 5 AND m.status = 1
+              GROUP BY mht.test_id
+            ) rl ON rl.test_id = ir.id
             WHERE 1=1 ${where}
             ORDER BY ${sortField === 'name' ? 'irl.name' : 'ir.' + sortField} ${sortOrder}
             LIMIT :limit OFFSET :offset
@@ -69,9 +77,17 @@ router.get('/:id', async (req, res) => {
     try {
         const query = `
             SELECT ir.id, irl.name, ir.status, ir.sort_order, ir.created_date,
-                   ir.reading_text, ir.explain_text
+                   ir.reading_text, ir.explain_text,
+                   COALESCE(rl.required_level, 0) as required_level
             FROM ielts_reading ir
             LEFT JOIN ielts_reading_label irl ON ir.id = irl.ielts_reading_id AND irl.language_id = 1
+            LEFT JOIN (
+              SELECT mht.test_id, MIN(m.level) as required_level
+              FROM membership_has_test mht
+              JOIN membership m ON mht.membership_id = m.id
+              WHERE mht.type = 5 AND m.status = 1
+              GROUP BY mht.test_id
+            ) rl ON rl.test_id = ir.id
             WHERE ir.id = :id
         `;
 
@@ -133,7 +149,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     const t = await sequelize.transaction();
     try {
-        const { name, status, sort_order, reading_text, explain_text } = req.body;
+        const { name, status, sort_order, reading_text, explain_text, required_level } = req.body;
         const id = req.params.id;
 
         await sequelize.query(
@@ -157,9 +173,29 @@ router.put('/:id', async (req, res) => {
             }
         );
 
+        // Update required access level
+        if (required_level !== undefined) {
+            await sequelize.query(
+                `DELETE FROM membership_has_test WHERE test_id = :id AND type = 5`,
+                { replacements: { id }, type: QueryTypes.DELETE, transaction: t }
+            );
+            if (parseInt(required_level) > 0) {
+                const [membership] = await sequelize.query(
+                    `SELECT id FROM membership WHERE level = :level AND status = 1 ORDER BY id ASC LIMIT 1`,
+                    { replacements: { level: parseInt(required_level) }, type: QueryTypes.SELECT, transaction: t }
+                );
+                if (membership) {
+                    await sequelize.query(
+                        `INSERT INTO membership_has_test (membership_id, test_id, type) VALUES (:membership_id, :test_id, 5)`,
+                        { replacements: { membership_id: membership.id, test_id: id }, type: QueryTypes.INSERT, transaction: t }
+                    );
+                }
+            }
+        }
+
         await t.commit();
 
-        res.json({ id: parseInt(id), name, status, sort_order, reading_text, explain_text });
+        res.json({ id: parseInt(id), name, status, sort_order, reading_text, explain_text, required_level: parseInt(required_level) || 0 });
     } catch (error) {
         await t.rollback();
         console.error('Error updating ielts reading:', error);
