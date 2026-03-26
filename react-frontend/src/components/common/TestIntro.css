@@ -1,0 +1,55 @@
+.test-intro {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 300px);
+  padding: 40px 20px;
+}
+
+.test-intro-card {
+  max-width: 700px;
+  width: 100%;
+  background-color: #fff;
+  border: 2px solid #dee2e6;
+  border-radius: 10px;
+  padding: 40px 50px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.test-intro-title {
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+  font-size: 22px;
+}
+
+.test-intro-instructions {
+  margin-bottom: 35px;
+}
+
+.test-intro-instructions p {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #444;
+  margin-bottom: 16px;
+}
+
+.test-intro-instructions p:last-child {
+  margin-bottom: 0;
+}
+
+.test-intro-btn {
+  display: block;
+  margin: 0 auto;
+  min-width: 180px;
+  padding: 12px 40px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+@media (max-width: 768px) {
+  .test-intro-card {
+    padding: 30px 25px;
+  }
+}

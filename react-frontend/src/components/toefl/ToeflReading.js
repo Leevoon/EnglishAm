@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toeflAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import TestIntro from '../common/TestIntro';
 import './ToeflSection.css';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
@@ -27,6 +28,7 @@ const ToeflReading = () => {
   const [results, setResults] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [timeLeft, setTimeLeft] = useState(TEST_DURATION);
+  const [showIntro, setShowIntro] = useState(true);
   const timerRef = useRef(null);
 
   useEffect(() => {
@@ -56,13 +58,14 @@ const ToeflReading = () => {
       setResults(null);
       setCurrentQuestion(0);
       setTimeLeft(TEST_DURATION);
+      setShowIntro(true);
       if (timerRef.current) clearInterval(timerRef.current);
     }
   }, [testId]);
 
-  // Timer
+  // Timer — only starts after intro is dismissed
   useEffect(() => {
-    if (selectedTest && !submitted) {
+    if (selectedTest && !submitted && !showIntro) {
       timerRef.current = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
@@ -74,7 +77,7 @@ const ToeflReading = () => {
       }, 1000);
       return () => clearInterval(timerRef.current);
     }
-  }, [selectedTest, submitted]);
+  }, [selectedTest, submitted, showIntro]);
 
   // Auto-submit when time runs out
   useEffect(() => {
@@ -105,6 +108,7 @@ const ToeflReading = () => {
       setSelectedAnswers({});
       setSubmitted(false);
       setResults(null);
+      setShowIntro(true);
     } catch (error) {
       if (error.response?.status === 403) {
         const level = error.response.data?.required_level || 1;
@@ -159,6 +163,25 @@ const ToeflReading = () => {
 
   if (loading) {
     return <div className="toefl-section"><div className="container">Loading TOEFL Reading tests...</div></div>;
+  }
+
+  if (selectedTest && showIntro) {
+    return (
+      <div className="toefl-section">
+        <div className="container">
+          <TestIntro
+            title="TOEFL Reading"
+            instructions={[
+              'In this section, you will read a passage and answer comprehension questions about it. Most questions are worth one point, but the last question in each set is worth more than one point.',
+              'When you want to go to the next question, click the Next button. You may not skip questions and go back to them later. You can click on Review at the end of the test.',
+              'As you sign in to your account the review screen will show you which questions you have answered wrong and which you have not.',
+              'Click on CONTINUE, when you are ready to start.',
+            ]}
+            onContinue={() => setShowIntro(false)}
+          />
+        </div>
+      </div>
+    );
   }
 
   if (selectedTest) {
