@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toeflAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import TestIntro from '../common/TestIntro';
 import './ToeflSection.css';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
@@ -28,6 +29,7 @@ const ToeflListening = () => {
   const [results, setResults] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [timeLeft, setTimeLeft] = useState(TEST_DURATION);
+  const [showIntro, setShowIntro] = useState(true);
   const timerRef = useRef(null);
 
   useEffect(() => {
@@ -57,12 +59,13 @@ const ToeflListening = () => {
       setResults(null);
       setCurrentQuestion(0);
       setTimeLeft(TEST_DURATION);
+      setShowIntro(true);
       if (timerRef.current) clearInterval(timerRef.current);
     }
   }, [testId]);
 
   useEffect(() => {
-    if (selectedTest && !submitted) {
+    if (selectedTest && !submitted && !showIntro) {
       timerRef.current = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
@@ -74,7 +77,7 @@ const ToeflListening = () => {
       }, 1000);
       return () => clearInterval(timerRef.current);
     }
-  }, [selectedTest, submitted]);
+  }, [selectedTest, submitted, showIntro]);
 
   useEffect(() => {
     if (timeLeft === 0 && !submitted && selectedTest) {
@@ -104,6 +107,7 @@ const ToeflListening = () => {
       setSelectedAnswers({});
       setSubmitted(false);
       setResults(null);
+      setShowIntro(true);
     } catch (error) {
       if (error.response?.status === 403) {
         const level = error.response.data?.required_level || 1;
@@ -154,6 +158,31 @@ const ToeflListening = () => {
 
   if (loading) {
     return <div className="toefl-section"><div className="container">Loading TOEFL Listening tests...</div></div>;
+  }
+
+  if (selectedTest && showIntro) {
+    // intro_audio field can be added to toefl_listening table later
+    const introAudio = selectedTest.test?.intro_audio
+      ? `${MEDIA_BASE}/uploads/toefl/${selectedTest.test.intro_audio}`
+      : null;
+
+    return (
+      <div className="toefl-section">
+        <div className="container">
+          <TestIntro
+            title="TOEFL Listening"
+            instructions={[
+              'This section measures your ability to understand conversations and lectures in English. You will listen to one conversation and one lecture. You will hear each conversation and lecture one time.',
+              'After each conversation or lecture you will answer questions about it. The questions typically ask about the main idea and supporting details. Some questions ask about the speaker\'s purpose or attitude. Answer the questions based on what is stated or implied by the speakers.',
+              'You may take notes while you listen. You may use your notes to help you answer the questions. Your notes will not be scored.',
+              'Click on CONTINUE, when you are ready to start.',
+            ]}
+            audioSrc={introAudio}
+            onContinue={() => setShowIntro(false)}
+          />
+        </div>
+      </div>
+    );
   }
 
   if (selectedTest && selectedTest.parts) {

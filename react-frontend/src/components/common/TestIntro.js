@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './TestIntro.css';
 
-const TestIntro = ({ title, instructions, onContinue }) => {
+const TestIntro = ({ title, instructions, audioSrc, onContinue }) => {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   return (
     <div className="test-intro">
       <div className="test-intro-card">
@@ -11,6 +14,14 @@ const TestIntro = ({ title, instructions, onContinue }) => {
             <p key={index}>{text}</p>
           ))}
         </div>
+        {audioSrc && (
+          <div className="test-intro-audio">
+            <audio controls autoPlay>
+              <source src={audioSrc} type="audio/mpeg" />
+              Your browser does not support the audio element.
+            </audio>
+          </div>
+        )}
         <button className="btn btn-primary test-intro-btn" onClick={onContinue}>
           CONTINUE
         </button>
