@@ -172,6 +172,11 @@ router.get('/:section/:id', optionalAuth, async (req, res) => {
         passages
       });
     } else if (section === 'listening') {
+      // Get intro/explain data (audio for the intro page)
+      const [explain] = await sequelize.query(`
+        SELECT * FROM toefl_listening_explain LIMIT 1
+      `);
+
       // Get listening test parts (each has audio + image)
       const [parts] = await sequelize.query(`
         SELECT * FROM toefl_listening_test
@@ -201,6 +206,7 @@ router.get('/:section/:id', optionalAuth, async (req, res) => {
 
       return res.json({
         test: results[0],
+        explain: explain[0] || null,
         parts
       });
     }

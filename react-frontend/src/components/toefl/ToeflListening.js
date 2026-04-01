@@ -161,9 +161,8 @@ const ToeflListening = () => {
   }
 
   if (selectedTest && showIntro) {
-    // intro_audio field can be added to toefl_listening table later
-    const introAudio = selectedTest.test?.intro_audio
-      ? `${MEDIA_BASE}/uploads/toefl/${selectedTest.test.intro_audio}`
+    const introAudio = selectedTest.explain?.audio
+      ? `${MEDIA_BASE}/uploads/toefl/${selectedTest.explain.audio}`
       : null;
 
     return (
