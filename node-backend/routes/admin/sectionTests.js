@@ -4,6 +4,68 @@ const { QueryTypes } = require('sequelize');
 
 const ALLOWED_SORT_FIELDS = ['id', 'name', 'status', 'sort_order', 'level_id', 'created_date'];
 
+// Ensure antonyms category (id=23) exists, mirroring synonyms (id=19)
+async function ensureAntonymsCategory() {
+  try {
+    const [existing] = await sequelize.query(
+      `SELECT id FROM category WHERE id = 23`,
+      { type: QueryTypes.SELECT }
+    );
+    if (existing) return;
+
+    console.log('Creating antonyms category (id=23)...');
+
+    // Get synonyms category as template
+    const [synonyms] = await sequelize.query(
+      `SELECT * FROM category WHERE id = 19`,
+      { type: QueryTypes.SELECT }
+    );
+
+    // Insert category with explicit id=23
+    await sequelize.query(`
+      INSERT INTO category (id, parent_id, status, sort_order, \`key\`, show_scool_part, show_scool_level_or_filter, has_level, image)
+      VALUES (23, :parent_id, 1, :sort_order, NULL, :show_scool_part, :show_scool_level_or_filter, :has_level, NULL)
+    `, {
+      replacements: {
+        parent_id: synonyms ? synonyms.parent_id : 1,
+        sort_order: synonyms ? synonyms.sort_order : 0,
+        show_scool_part: synonyms ? synonyms.show_scool_part : 0,
+        show_scool_level_or_filter: synonyms ? synonyms.show_scool_level_or_filter : 0,
+        has_level: synonyms ? synonyms.has_level : 1,
+      },
+      type: QueryTypes.INSERT
+    });
+
+    // Insert category label
+    await sequelize.query(`
+      INSERT INTO category_label (category_id, language_id, value)
+      VALUES (23, 1, 'Antonyms')
+    `, { type: QueryTypes.INSERT });
+
+    // Create default subcategory (parent_id=0 header)
+    const [subResult] = await sequelize.query(`
+      INSERT INTO test_category (category_id, parent_id, level_id, status, sort_order, time, created_date)
+      VALUES (23, 0, 0, 1, 0, '00:10:00', NOW())
+    `, { type: QueryTypes.INSERT });
+
+    // Insert subcategory label
+    await sequelize.query(`
+      INSERT INTO test_category_label (test_category_id, language_id, name, description, seo_name)
+      VALUES (:id, 1, 'ANTONYMS', '', 'antonyms')
+    `, {
+      replacements: { id: subResult },
+      type: QueryTypes.INSERT
+    });
+
+    console.log('Antonyms category created successfully.');
+  } catch (error) {
+    console.error('Error ensuring antonyms category:', error.message);
+  }
+}
+
+// Run on module load
+ensureAntonymsCategory();
+
 function buildQuery(req) {
   const page = parseInt(req.query.page) || 1;
   const perPage = Math.min(parseInt(req.query.perPage) || 10, 100);
