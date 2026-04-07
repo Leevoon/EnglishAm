@@ -39,6 +39,16 @@ const ieltsListeningQuestionsRouter = require('./ieltsListeningQuestions');
 const ieltsSpeakingRouter = require('./ieltsSpeaking');
 const ieltsWritingRouter = require('./ieltsWriting');
 
+// Section test routes
+const {
+  audioTestsRouter,
+  synonymTestsRouter,
+  antonymTestsRouter,
+  generalEnglishTestsRouter,
+  professionalEnglishTestsRouter,
+  photoTestsRouter,
+} = require('./sectionTests');
+
 // Auth routes (no token required)
 router.use('/auth', authRouter);
 
@@ -76,6 +86,14 @@ router.use('/ielts-listening', verifyToken, ieltsListeningRouter);
 router.use('/ielts-listening-questions', verifyToken, ieltsListeningQuestionsRouter);
 router.use('/ielts-speaking', verifyToken, ieltsSpeakingRouter);
 router.use('/ielts-writing', verifyToken, ieltsWritingRouter);
+
+// Section Tests
+router.use('/audio-tests', verifyToken, audioTestsRouter);
+router.use('/synonym-tests', verifyToken, synonymTestsRouter);
+router.use('/antonym-tests', verifyToken, antonymTestsRouter);
+router.use('/general-english-tests', verifyToken, generalEnglishTestsRouter);
+router.use('/professional-english-tests', verifyToken, professionalEnglishTestsRouter);
+router.use('/photo-tests', verifyToken, photoTestsRouter);
 
 module.exports = router;
 

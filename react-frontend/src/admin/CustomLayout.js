@@ -18,6 +18,12 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import HeadphonesIcon from '@mui/icons-material/Headphones';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import EditNoteIcon from '@mui/icons-material/EditNote';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
+import SchoolIcon from '@mui/icons-material/School';
+import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 
 const SectionLabel = ({ children }) => {
   const [open] = useSidebarState();
@@ -63,6 +69,14 @@ const CustomMenu = () => (
     <Menu.Item to="/news" primaryText="News" leftIcon={<NewspaperIcon />} />
     <Menu.Item to="/slideshow" primaryText="Slideshow" leftIcon={<SlideshowIcon />} />
     <Menu.Item to="/gallery" primaryText="Gallery" leftIcon={<PhotoLibraryIcon />} />
+
+    <SectionLabel>Tests</SectionLabel>
+    <Menu.Item to="/audio-tests" primaryText="Audio Tests" leftIcon={<VolumeUpIcon />} />
+    <Menu.Item to="/synonym-tests" primaryText="Synonyms" leftIcon={<SwapHorizIcon />} />
+    <Menu.Item to="/antonym-tests" primaryText="Antonyms" leftIcon={<CompareArrowsIcon />} />
+    <Menu.Item to="/general-english-tests" primaryText="General English" leftIcon={<SchoolIcon />} />
+    <Menu.Item to="/professional-english-tests" primaryText="Professional English" leftIcon={<BusinessCenterIcon />} />
+    <Menu.Item to="/photo-tests" primaryText="Photo Tests" leftIcon={<PhotoCameraIcon />} />
 
     <SectionLabel>TOEFL</SectionLabel>
     <Menu.Item to="/toefl-reading" primaryText="Reading" leftIcon={<MenuBookIcon />} />

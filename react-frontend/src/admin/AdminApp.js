@@ -48,6 +48,16 @@ import { IeltsWritingList, IeltsWritingEdit, IeltsWritingCreate } from './resour
 import { IeltsReadingQuestionEdit, IeltsReadingQuestionCreate } from './resources/ieltsReadingQuestions';
 import { IeltsListeningQuestionEdit, IeltsListeningQuestionCreate } from './resources/ieltsListeningQuestions';
 
+// Section Tests
+import {
+  AudioTestList, AudioTestEdit, AudioTestCreate,
+  SynonymTestList, SynonymTestEdit, SynonymTestCreate,
+  AntonymTestList, AntonymTestEdit, AntonymTestCreate,
+  GeneralEnglishTestList, GeneralEnglishTestEdit, GeneralEnglishTestCreate,
+  ProfessionalEnglishTestList, ProfessionalEnglishTestEdit, ProfessionalEnglishTestCreate,
+  PhotoTestList, PhotoTestEdit, PhotoTestCreate,
+} from './resources/sectionTests';
+
 // Dashboard
 import Dashboard from './Dashboard';
 
@@ -165,6 +175,56 @@ const AdminApp = () => {
         edit={GalleryEdit}
         create={GalleryCreate}
         options={{ label: 'Gallery' }}
+      />
+
+      {/* Section Tests */}
+      <Resource
+        name="audio-tests"
+        list={AudioTestList}
+        edit={AudioTestEdit}
+        create={AudioTestCreate}
+        options={{ label: 'Audio Tests' }}
+        recordRepresentation="name"
+      />
+      <Resource
+        name="synonym-tests"
+        list={SynonymTestList}
+        edit={SynonymTestEdit}
+        create={SynonymTestCreate}
+        options={{ label: 'Synonyms' }}
+        recordRepresentation="name"
+      />
+      <Resource
+        name="antonym-tests"
+        list={AntonymTestList}
+        edit={AntonymTestEdit}
+        create={AntonymTestCreate}
+        options={{ label: 'Antonyms' }}
+        recordRepresentation="name"
+      />
+      <Resource
+        name="general-english-tests"
+        list={GeneralEnglishTestList}
+        edit={GeneralEnglishTestEdit}
+        create={GeneralEnglishTestCreate}
+        options={{ label: 'General English' }}
+        recordRepresentation="name"
+      />
+      <Resource
+        name="professional-english-tests"
+        list={ProfessionalEnglishTestList}
+        edit={ProfessionalEnglishTestEdit}
+        create={ProfessionalEnglishTestCreate}
+        options={{ label: 'Professional English' }}
+        recordRepresentation="name"
+      />
+      <Resource
+        name="photo-tests"
+        list={PhotoTestList}
+        edit={PhotoTestEdit}
+        create={PhotoTestCreate}
+        options={{ label: 'Photo Tests' }}
+        recordRepresentation="name"
       />
 
       {/* TOEFL - Combined pages */}
