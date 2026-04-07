@@ -4,16 +4,30 @@ import { testsAPI } from '../services/api';
 import { useApp } from '../context/AppContext';
 import './TestListPage.css';
 
+// Per-category filter configuration (matches admin panel)
+const categoryConfig = {
+  'audio':                { hasLevels: true,  hasVariant: true,  hasSubcategories: false },
+  'synonyms':             { hasLevels: true,  hasVariant: false, hasSubcategories: false },
+  'antonyms':             { hasLevels: true,  hasVariant: false, hasSubcategories: false },
+  'general-english':      { hasLevels: true,  hasVariant: false, hasSubcategories: true },
+  'professional-english': { hasLevels: true,  hasVariant: false, hasSubcategories: true },
+  'photo':                { hasLevels: false, hasVariant: false, hasSubcategories: true },
+};
+
 const TestListPage = () => {
   const { category } = useParams();
   const { currentLanguage } = useApp();
   const [tests, setTests] = useState([]);
   const [levels, setLevels] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedLevel, setSelectedLevel] = useState('all');
   const [selectedVariant, setSelectedVariant] = useState('both');
+  const [selectedSubcategory, setSelectedSubcategory] = useState('all');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  const config = categoryConfig[category] || { hasLevels: true, hasVariant: false, hasSubcategories: false };
 
   const categoryNames = {
     'audio': 'Audio Tests',
@@ -33,13 +47,26 @@ const TestListPage = () => {
     'photo': 'Visual learning through picture-based tests'
   };
 
+  // Reset filters when category changes
   useEffect(() => {
-    loadLevels();
-  }, [currentLanguage.id]);
+    setSelectedLevel('all');
+    setSelectedVariant('both');
+    setSelectedSubcategory('all');
+    setPage(1);
+  }, [category]);
+
+  useEffect(() => {
+    if (config.hasLevels) {
+      loadLevels();
+    }
+    if (config.hasSubcategories) {
+      loadSubcategories();
+    }
+  }, [category, currentLanguage.id]);
 
   useEffect(() => {
     loadTests();
-  }, [category, currentLanguage.id, selectedLevel, selectedVariant, page]);
+  }, [category, currentLanguage.id, selectedLevel, selectedVariant, selectedSubcategory, page]);
 
   const loadLevels = async () => {
     try {
@@ -47,6 +74,15 @@ const TestListPage = () => {
       setLevels(response.data || []);
     } catch (error) {
       console.error('Error loading levels:', error);
+    }
+  };
+
+  const loadSubcategories = async () => {
+    try {
+      const response = await testsAPI.getCategories(getCategoryId(category), currentLanguage.id);
+      setSubcategories(response.data || []);
+    } catch (error) {
+      console.error('Error loading subcategories:', error);
     }
   };
 
@@ -59,12 +95,15 @@ const TestListPage = () => {
         page,
         limit: 12
       };
-      
-      if (selectedLevel !== 'all') {
+
+      if (config.hasLevels && selectedLevel !== 'all') {
         params.levelId = selectedLevel;
       }
-      if (selectedVariant !== 'both') {
+      if (config.hasVariant && selectedVariant !== 'both') {
         params.variant = selectedVariant;
+      }
+      if (config.hasSubcategories && selectedSubcategory !== 'all') {
+        params.filter = selectedSubcategory;
       }
 
       const response = await testsAPI.getTests(params);
@@ -72,7 +111,6 @@ const TestListPage = () => {
       setTotalPages(response.data.pagination?.totalPages || 1);
     } catch (error) {
       console.error('Error loading tests:', error);
-      // Fallback data
       setTests(generateFallbackTests());
     } finally {
       setLoading(false);
@@ -128,34 +166,56 @@ const TestListPage = () => {
         <div className="container">
           {/* Filters */}
           <div className="test-filters">
-            <div className="filter-group">
-              <label className="filter-label">Level</label>
-              <select 
-                className="form-control form-select"
-                value={selectedLevel}
-                onChange={(e) => { setSelectedLevel(e.target.value); setPage(1); }}
-              >
-                <option value="all">All Levels</option>
-                {levels.map((level) => (
-                  <option key={level.id} value={level.id}>
-                    {level.labels?.[0]?.name || `Level ${level.id}`}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {config.hasSubcategories && subcategories.length > 0 && (
+              <div className="filter-group">
+                <label className="filter-label">Category</label>
+                <select
+                  className="form-control form-select"
+                  value={selectedSubcategory}
+                  onChange={(e) => { setSelectedSubcategory(e.target.value); setPage(1); }}
+                >
+                  <option value="all">All Categories</option>
+                  {subcategories.map((sub) => (
+                    <option key={sub.id} value={sub.id}>
+                      {sub.labels?.[0]?.name || `Category ${sub.id}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
-            <div className="filter-group">
-              <label className="filter-label">English Variant</label>
-              <select 
-                className="form-control form-select"
-                value={selectedVariant}
-                onChange={(e) => { setSelectedVariant(e.target.value); setPage(1); }}
-              >
-                <option value="both">Both</option>
-                <option value="american">American English</option>
-                <option value="british">British English</option>
-              </select>
-            </div>
+            {config.hasLevels && (
+              <div className="filter-group">
+                <label className="filter-label">Level</label>
+                <select
+                  className="form-control form-select"
+                  value={selectedLevel}
+                  onChange={(e) => { setSelectedLevel(e.target.value); setPage(1); }}
+                >
+                  <option value="all">All Levels</option>
+                  {levels.map((level) => (
+                    <option key={level.id} value={level.id}>
+                      {level.labels?.[0]?.name || `Level ${level.id}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {config.hasVariant && (
+              <div className="filter-group">
+                <label className="filter-label">Accent</label>
+                <select
+                  className="form-control form-select"
+                  value={selectedVariant}
+                  onChange={(e) => { setSelectedVariant(e.target.value); setPage(1); }}
+                >
+                  <option value="both">Both</option>
+                  <option value="american">American English</option>
+                  <option value="british">British English</option>
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Tests Grid */}
@@ -169,7 +229,7 @@ const TestListPage = () => {
               <p>No tests found matching your criteria.</p>
               <button 
                 className="btn btn-outline"
-                onClick={() => { setSelectedLevel('all'); setSelectedVariant('both'); }}
+                onClick={() => { setSelectedLevel('all'); setSelectedVariant('both'); setSelectedSubcategory('all'); }}
               >
                 Clear Filters
               </button>
