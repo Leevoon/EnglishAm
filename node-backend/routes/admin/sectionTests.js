@@ -13,8 +13,22 @@ function buildQuery(req) {
   return { page, perPage, sortField, sortOrder, filter };
 }
 
-function createSectionRouter(categoryId) {
+// Check once at startup whether english_variant column exists
+let hasVariantColumn = null;
+async function checkVariantColumn() {
+  if (hasVariantColumn !== null) return hasVariantColumn;
+  try {
+    await sequelize.query(`SELECT english_variant FROM test_category LIMIT 0`);
+    hasVariantColumn = true;
+  } catch {
+    hasVariantColumn = false;
+  }
+  return hasVariantColumn;
+}
+
+function createSectionRouter(categoryId, options = {}) {
   const router = express.Router();
+  const useVariant = options.hasVariant || false;
 
   // GET /filters - subcategory options (parent_id=0) + levels
   router.get('/filters', async (req, res) => {
@@ -38,7 +52,7 @@ function createSectionRouter(categoryId) {
       res.json({ subcategories, levels });
     } catch (error) {
       console.error('Error fetching filters:', error);
-      res.status(500).json({ message: 'Server error' });
+      res.status(500).json({ message: error.message || 'Server error' });
     }
   });
 
@@ -72,7 +86,9 @@ function createSectionRouter(categoryId) {
         replacements.parent_id = filter.parent_id;
       }
 
-      if (filter.english_variant) {
+      // english_variant filter (only if column exists)
+      const variantExists = useVariant && await checkVariantColumn();
+      if (filter.english_variant && variantExists) {
         where += ' AND tc.english_variant = :english_variant';
         replacements.english_variant = filter.english_variant;
       }
@@ -88,10 +104,12 @@ function createSectionRouter(categoryId) {
         : sortField === 'level_id' ? 'tc.level_id'
         : `tc.${sortField}`;
 
+      const variantSelect = variantExists ? ', tc.english_variant' : ", 'both' as english_variant";
+
       const data = await sequelize.query(`
         SELECT tc.id, tc.category_id, tc.parent_id, tc.level_id, tc.status,
-               tc.sort_order, tc.time, tc.image, tc.created_date,
-               tc.english_variant,
+               tc.sort_order, tc.time, tc.image, tc.created_date
+               ${variantSelect},
                tcl.name, tcl.description,
                tll.name as level_name,
                pcl.name as parent_name,
@@ -122,17 +140,20 @@ function createSectionRouter(categoryId) {
       res.json({ data, total: countResult.total });
     } catch (error) {
       console.error('Error fetching section tests:', error);
-      res.status(500).json({ message: 'Server error' });
+      res.status(500).json({ message: error.message || 'Server error' });
     }
   });
 
   // GET /:id - Single test category with questions
   router.get('/:id', async (req, res) => {
     try {
+      const variantExists = useVariant && await checkVariantColumn();
+      const variantSelect = variantExists ? ', tc.english_variant' : ", 'both' as english_variant";
+
       const [testCategory] = await sequelize.query(`
         SELECT tc.id, tc.category_id, tc.parent_id, tc.level_id, tc.status,
-               tc.sort_order, tc.time, tc.image, tc.created_date,
-               tc.english_variant,
+               tc.sort_order, tc.time, tc.image, tc.created_date
+               ${variantSelect},
                tcl.name, tcl.description,
                tll.name as level_name,
                pcl.name as parent_name,
@@ -164,7 +185,7 @@ function createSectionRouter(categoryId) {
       // Get questions with answers
       const questions = await sequelize.query(`
         SELECT t.id, t.parent_id as test_category_id, t.status, t.sort_order,
-               t.image, t.audio, t.question_type, t.answer_type,
+               t.image, t.audio,
                COALESCE(tl.value, t.question) as question
         FROM test t
         LEFT JOIN test_label tl ON t.id = tl.test_id AND tl.language_id = 1
@@ -192,7 +213,7 @@ function createSectionRouter(categoryId) {
       res.json(testCategory);
     } catch (error) {
       console.error('Error fetching test category:', error);
-      res.status(500).json({ message: 'Server error' });
+      res.status(500).json({ message: error.message || 'Server error' });
     }
   });
 
@@ -206,23 +227,30 @@ function createSectionRouter(categoryId) {
         required_level
       } = req.body;
 
-      const [result] = await sequelize.query(`
-        INSERT INTO test_category (category_id, parent_id, level_id, status, sort_order, time, image, english_variant, created_date)
-        VALUES (:category_id, :parent_id, :level_id, :status, :sort_order, :time, :image, :english_variant, NOW())
-      `, {
-        replacements: {
-          category_id: categoryId,
-          parent_id: parent_id || 0,
-          level_id: level_id || 0,
-          status,
-          sort_order,
-          time: time || '00:10:00',
-          image: image || null,
-          english_variant: english_variant || 'both'
-        },
-        type: QueryTypes.INSERT,
-        transaction: t
-      });
+      const variantExists = useVariant && await checkVariantColumn();
+
+      const insertCols = 'category_id, parent_id, level_id, status, sort_order, time, image, created_date'
+        + (variantExists ? ', english_variant' : '');
+      const insertVals = ':category_id, :parent_id, :level_id, :status, :sort_order, :time, :image, NOW()'
+        + (variantExists ? ', :english_variant' : '');
+
+      const insertReplacements = {
+        category_id: categoryId,
+        parent_id: parent_id || 0,
+        level_id: level_id || 0,
+        status,
+        sort_order,
+        time: time || '00:10:00',
+        image: image || null,
+      };
+      if (variantExists) {
+        insertReplacements.english_variant = english_variant || 'both';
+      }
+
+      const [result] = await sequelize.query(
+        `INSERT INTO test_category (${insertCols}) VALUES (${insertVals})`,
+        { replacements: insertReplacements, type: QueryTypes.INSERT, transaction: t }
+      );
 
       const newId = result;
 
@@ -259,7 +287,7 @@ function createSectionRouter(categoryId) {
     } catch (error) {
       await t.rollback();
       console.error('Error creating test category:', error);
-      res.status(500).json({ message: 'Server error' });
+      res.status(500).json({ message: error.message || 'Server error' });
     }
   });
 
@@ -274,21 +302,27 @@ function createSectionRouter(categoryId) {
       } = req.body;
       const id = req.params.id;
 
-      await sequelize.query(`
-        UPDATE test_category
-        SET parent_id = COALESCE(:parent_id, parent_id),
-            level_id = COALESCE(:level_id, level_id),
-            status = COALESCE(:status, status),
-            sort_order = COALESCE(:sort_order, sort_order),
-            time = COALESCE(:time, time),
-            image = COALESCE(:image, image),
-            english_variant = COALESCE(:english_variant, english_variant)
-        WHERE id = :id
-      `, {
-        replacements: { id, parent_id, level_id, status, sort_order, time, image, english_variant },
-        type: QueryTypes.UPDATE,
-        transaction: t
-      });
+      const variantExists = useVariant && await checkVariantColumn();
+
+      let updateSet = `
+        parent_id = COALESCE(:parent_id, parent_id),
+        level_id = COALESCE(:level_id, level_id),
+        status = COALESCE(:status, status),
+        sort_order = COALESCE(:sort_order, sort_order),
+        time = COALESCE(:time, time),
+        image = COALESCE(:image, image)`;
+
+      const updateReplacements = { id, parent_id, level_id, status, sort_order, time, image };
+
+      if (variantExists) {
+        updateSet += ', english_variant = COALESCE(:english_variant, english_variant)';
+        updateReplacements.english_variant = english_variant;
+      }
+
+      await sequelize.query(
+        `UPDATE test_category SET ${updateSet} WHERE id = :id`,
+        { replacements: updateReplacements, type: QueryTypes.UPDATE, transaction: t }
+      );
 
       // Update or insert label
       const [existingLabel] = await sequelize.query(
@@ -352,7 +386,7 @@ function createSectionRouter(categoryId) {
     } catch (error) {
       await t.rollback();
       console.error('Error updating test category:', error);
-      res.status(500).json({ message: 'Server error' });
+      res.status(500).json({ message: error.message || 'Server error' });
     }
   });
 
@@ -362,25 +396,32 @@ function createSectionRouter(categoryId) {
     try {
       const id = req.params.id;
 
-      // Delete answers for all child tests
-      await sequelize.query(`
-        DELETE ta FROM test_answer ta
-        INNER JOIN test t ON ta.test_id = t.id
-        WHERE t.parent_id = :id
-      `, { replacements: { id }, type: QueryTypes.DELETE, transaction: t });
-
-      // Delete labels for all child tests
-      await sequelize.query(`
-        DELETE tl FROM test_label tl
-        INNER JOIN test t ON tl.test_id = t.id
-        WHERE t.parent_id = :id
-      `, { replacements: { id }, type: QueryTypes.DELETE, transaction: t });
-
-      // Delete child tests
-      await sequelize.query(
-        `DELETE FROM test WHERE parent_id = :id`,
-        { replacements: { id }, type: QueryTypes.DELETE, transaction: t }
+      // Get child test IDs first
+      const childTests = await sequelize.query(
+        `SELECT id FROM test WHERE parent_id = :id`,
+        { replacements: { id }, type: QueryTypes.SELECT, transaction: t }
       );
+      const childIds = childTests.map(ct => ct.id);
+
+      if (childIds.length > 0) {
+        // Delete answers for all child tests
+        await sequelize.query(
+          `DELETE FROM test_answer WHERE test_id IN (:childIds)`,
+          { replacements: { childIds }, type: QueryTypes.DELETE, transaction: t }
+        );
+
+        // Delete labels for all child tests
+        await sequelize.query(
+          `DELETE FROM test_label WHERE test_id IN (:childIds)`,
+          { replacements: { childIds }, type: QueryTypes.DELETE, transaction: t }
+        );
+
+        // Delete child tests
+        await sequelize.query(
+          `DELETE FROM test WHERE parent_id = :id`,
+          { replacements: { id }, type: QueryTypes.DELETE, transaction: t }
+        );
+      }
 
       // Delete membership access entries
       await sequelize.query(
@@ -405,7 +446,7 @@ function createSectionRouter(categoryId) {
     } catch (error) {
       await t.rollback();
       console.error('Error deleting test category:', error);
-      res.status(500).json({ message: 'Server error' });
+      res.status(500).json({ message: error.message || 'Server error' });
     }
   });
 
@@ -413,7 +454,7 @@ function createSectionRouter(categoryId) {
 }
 
 module.exports = {
-  audioTestsRouter: createSectionRouter(15),
+  audioTestsRouter: createSectionRouter(15, { hasVariant: true }),
   synonymTestsRouter: createSectionRouter(19),
   antonymTestsRouter: createSectionRouter(23),
   generalEnglishTestsRouter: createSectionRouter(2),
