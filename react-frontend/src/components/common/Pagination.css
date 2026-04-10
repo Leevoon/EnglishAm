@@ -1,0 +1,24 @@
+/* Pagination component uses shared .pagination/.pagination-link styles.
+   This file adds overrides specific to the windowed pagination. */
+
+.pagination {
+  flex-wrap: nowrap;
+}
+
+.pagination-arrow {
+  font-size: var(--font-size-lg);
+  line-height: 1;
+  font-weight: var(--font-weight-bold);
+}
+
+.pagination-link:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background-color: transparent;
+  border-color: var(--color-gray-300);
+}
+
+.pagination-link:disabled:hover {
+  background-color: transparent;
+  border-color: var(--color-gray-300);
+}

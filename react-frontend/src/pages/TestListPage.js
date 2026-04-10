@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { testsAPI } from '../services/api';
 import { useApp } from '../context/AppContext';
+import Pagination from '../components/common/Pagination';
 import './TestListPage.css';
 
 // Per-category filter configuration (matches admin panel)
@@ -287,33 +288,12 @@ const TestListPage = () => {
                   </div>
 
                   {/* Pagination */}
-                  {totalPages > 1 && (
-                    <div className="pagination">
-                      <button
-                        className="pagination-link"
-                        disabled={page === 1}
-                        onClick={() => setPage(p => p - 1)}
-                      >
-                        Previous
-                      </button>
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                        <button
-                          key={p}
-                          className={`pagination-link ${p === page ? 'active' : ''}`}
-                          onClick={() => setPage(p)}
-                        >
-                          {p}
-                        </button>
-                      ))}
-                      <button
-                        className="pagination-link"
-                        disabled={page === totalPages}
-                        onClick={() => setPage(p => p + 1)}
-                      >
-                        Next
-                      </button>
-                    </div>
-                  )}
+                  <Pagination
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                  />
+
                 </>
               )}
             </div>
