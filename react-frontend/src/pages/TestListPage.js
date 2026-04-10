@@ -164,136 +164,160 @@ const TestListPage = () => {
 
       <div className="page-content">
         <div className="container">
-          {/* Filters */}
-          <div className="test-filters">
-            {config.hasSubcategories && subcategories.length > 0 && (
-              <div className="filter-group">
-                <label className="filter-label">Category</label>
-                <select
-                  className="form-control form-select"
-                  value={selectedSubcategory}
-                  onChange={(e) => { setSelectedSubcategory(e.target.value); setPage(1); }}
-                >
-                  <option value="all">All Categories</option>
-                  {subcategories.map((sub) => (
-                    <option key={sub.id} value={sub.id}>
-                      {sub.labels?.[0]?.name || `Category ${sub.id}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {config.hasLevels && (
-              <div className="filter-group">
-                <label className="filter-label">Level</label>
-                <select
-                  className="form-control form-select"
-                  value={selectedLevel}
-                  onChange={(e) => { setSelectedLevel(e.target.value); setPage(1); }}
-                >
-                  <option value="all">All Levels</option>
-                  {levels.map((level) => (
-                    <option key={level.id} value={level.id}>
-                      {level.labels?.[0]?.name || `Level ${level.id}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {config.hasVariant && (
-              <div className="filter-group">
-                <label className="filter-label">Accent</label>
-                <select
-                  className="form-control form-select"
-                  value={selectedVariant}
-                  onChange={(e) => { setSelectedVariant(e.target.value); setPage(1); }}
-                >
-                  <option value="both">Both</option>
-                  <option value="american">American English</option>
-                  <option value="british">British English</option>
-                </select>
-              </div>
-            )}
-          </div>
-
-          {/* Tests Grid */}
-          {loading ? (
-            <div className="loading-container">
-              <div className="spinner"></div>
-              <p className="loading-text">Loading tests...</p>
-            </div>
-          ) : tests.length === 0 ? (
-            <div className="empty-state">
-              <p>No tests found matching your criteria.</p>
-              <button 
-                className="btn btn-outline"
-                onClick={() => { setSelectedLevel('all'); setSelectedVariant('both'); setSelectedSubcategory('all'); }}
-              >
-                Clear Filters
-              </button>
-            </div>
-          ) : (
-            <>
-              <div className="tests-grid">
-                {tests.map((test) => {
-                  const testName = test.labels?.[0]?.name || `Test ${test.id}`;
-                  return (
-                    <div key={test.id} className="test-card card">
-                      <div className="test-card-header">
-                        <span className="test-level badge badge-primary">
-                          {getLevelName(test.level_id)}
-                        </span>
-                        <span className="test-date">{formatDate(test.created_date)}</span>
-                      </div>
-                      <div className="test-card-body">
-                        <h3 className="test-title">{testName}</h3>
-                        <p className="test-category">{categoryNames[category]}</p>
-                      </div>
-                      <div className="test-card-footer">
-                        <Link 
-                          to={`/tests/${category}/${test.id}`}
-                          className="btn btn-primary btn-block"
-                        >
-                          Begin Test
-                        </Link>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="pagination">
+          {/* Top Chip Filters (subcategories + variant) */}
+          {(config.hasSubcategories || config.hasVariant) && (
+            <div className="top-chip-filters">
+              {config.hasSubcategories && subcategories.length > 0 && (
+                <div className="chip-filter-row">
                   <button
-                    className="pagination-link"
-                    disabled={page === 1}
-                    onClick={() => setPage(p => p - 1)}
+                    className={`chip-filter ${selectedSubcategory === 'all' ? 'active' : ''}`}
+                    onClick={() => { setSelectedSubcategory('all'); setPage(1); }}
                   >
-                    Previous
+                    all
                   </button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  {subcategories.map((sub) => (
                     <button
-                      key={p}
-                      className={`pagination-link ${p === page ? 'active' : ''}`}
-                      onClick={() => setPage(p)}
+                      key={sub.id}
+                      className={`chip-filter ${String(selectedSubcategory) === String(sub.id) ? 'active' : ''}`}
+                      onClick={() => { setSelectedSubcategory(sub.id); setPage(1); }}
                     >
-                      {p}
+                      {sub.labels?.[0]?.name || `Category ${sub.id}`}
                     </button>
                   ))}
+                </div>
+              )}
+
+              {config.hasVariant && (
+                <div className="chip-filter-row">
                   <button
-                    className="pagination-link"
-                    disabled={page === totalPages}
-                    onClick={() => setPage(p => p + 1)}
+                    className={`chip-filter ${selectedVariant === 'both' ? 'active' : ''}`}
+                    onClick={() => { setSelectedVariant('both'); setPage(1); }}
                   >
-                    Next
+                    Both
+                  </button>
+                  <button
+                    className={`chip-filter ${selectedVariant === 'american' ? 'active' : ''}`}
+                    onClick={() => { setSelectedVariant('american'); setPage(1); }}
+                  >
+                    American English
+                  </button>
+                  <button
+                    className={`chip-filter ${selectedVariant === 'british' ? 'active' : ''}`}
+                    onClick={() => { setSelectedVariant('british'); setPage(1); }}
+                  >
+                    British English
                   </button>
                 </div>
               )}
-            </>
+            </div>
           )}
+
+          {/* Main Layout: Level sidebar + Tests */}
+          <div className="test-list-layout">
+            {config.hasLevels && (
+              <aside className="level-sidebar">
+                <ul className="level-list">
+                  <li>
+                    <button
+                      className={`level-item ${selectedLevel === 'all' ? 'active' : ''}`}
+                      onClick={() => { setSelectedLevel('all'); setPage(1); }}
+                    >
+                      All
+                    </button>
+                  </li>
+                  {levels.map((level) => (
+                    <li key={level.id}>
+                      <button
+                        className={`level-item ${String(selectedLevel) === String(level.id) ? 'active' : ''}`}
+                        onClick={() => { setSelectedLevel(level.id); setPage(1); }}
+                      >
+                        {level.labels?.[0]?.name || `Level ${level.id}`}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </aside>
+            )}
+
+            <div className="test-list-main">
+              {/* Tests Grid */}
+              {loading ? (
+                <div className="loading-container">
+                  <div className="spinner"></div>
+                  <p className="loading-text">Loading tests...</p>
+                </div>
+              ) : tests.length === 0 ? (
+                <div className="empty-state">
+                  <p>No tests found matching your criteria.</p>
+                  <button
+                    className="btn btn-outline"
+                    onClick={() => { setSelectedLevel('all'); setSelectedVariant('both'); setSelectedSubcategory('all'); }}
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="tests-grid">
+                    {tests.map((test) => {
+                      const testName = test.labels?.[0]?.name || `Test ${test.id}`;
+                      return (
+                        <div key={test.id} className="test-card card">
+                          <div className="test-card-header">
+                            <span className="test-level badge badge-primary">
+                              {getLevelName(test.level_id)}
+                            </span>
+                            <span className="test-date">{formatDate(test.created_date)}</span>
+                          </div>
+                          <div className="test-card-body">
+                            <h3 className="test-title">{testName}</h3>
+                            <p className="test-category">{categoryNames[category]}</p>
+                          </div>
+                          <div className="test-card-footer">
+                            <Link
+                              to={`/tests/${category}/${test.id}`}
+                              className="btn btn-primary btn-block"
+                            >
+                              Begin Test
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="pagination">
+                      <button
+                        className="pagination-link"
+                        disabled={page === 1}
+                        onClick={() => setPage(p => p - 1)}
+                      >
+                        Previous
+                      </button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                        <button
+                          key={p}
+                          className={`pagination-link ${p === page ? 'active' : ''}`}
+                          onClick={() => setPage(p)}
+                        >
+                          {p}
+                        </button>
+                      ))}
+                      <button
+                        className="pagination-link"
+                        disabled={page === totalPages}
+                        onClick={() => setPage(p => p + 1)}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
