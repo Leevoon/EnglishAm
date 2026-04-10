@@ -154,6 +154,22 @@ const TestListPage = () => {
     return level?.labels?.[0]?.name || 'All Levels';
   };
 
+  const getAccessLabel = (requiredLevel) => {
+    switch (Number(requiredLevel) || 0) {
+      case 2: return 'Gold';
+      case 1: return 'Silver';
+      default: return 'Free Access';
+    }
+  };
+
+  const getAccessClass = (requiredLevel) => {
+    switch (Number(requiredLevel) || 0) {
+      case 2: return 'test-access test-access-gold';
+      case 1: return 'test-access test-access-silver';
+      default: return 'test-access test-access-free';
+    }
+  };
+
   return (
     <div className="page test-list-page">
       <div className="page-header">
@@ -273,6 +289,9 @@ const TestListPage = () => {
                           <div className="test-card-body">
                             <h3 className="test-title">{testName}</h3>
                             <p className="test-category">{categoryNames[category]}</p>
+                            <span className={getAccessClass(test.required_level)}>
+                              {getAccessLabel(test.required_level)}
+                            </span>
                           </div>
                           <div className="test-card-footer">
                             <Link

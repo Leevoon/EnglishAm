@@ -1,14 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { 
-  TestCategory, 
-  TestCategoryLabel, 
-  TestLevel, 
+const {
+  TestCategory,
+  TestCategoryLabel,
+  TestLevel,
   TestLevelLabel,
   Test,
   TestAnswer,
   Language
 } = require('../models');
+const optionalAuth = require('../middleware/optionalAuth');
+const { annotateListWithAccess } = require('../middleware/membershipAccess');
 
 const DEFAULT_LANGUAGE_ID = 1;
 
@@ -92,7 +94,7 @@ router.get('/levels', async (req, res) => {
 });
 
 // Get filtered tests
-router.get('/', async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const { categoryId, levelId, variant, filter, page = 1, limit = 10 } = req.query;
     const languageId = req.query.languageId || DEFAULT_LANGUAGE_ID;
@@ -148,8 +150,11 @@ router.get('/', async (req, res) => {
       offset: offset
     });
 
+    const plainRows = rows.map(r => r.get({ plain: true }));
+    const annotated = await annotateListWithAccess(plainRows, 'test', req.userId);
+
     res.json({
-      tests: rows,
+      tests: annotated,
       pagination: {
         total: count,
         page: parseInt(page),
