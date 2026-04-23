@@ -35,6 +35,7 @@ import {
   ContactMessagesShow,
   ContactMessagesEdit,
 } from './resources/contactMessages';
+import { CvList, CvEdit, CvCreate } from './resources/cv';
 
 // TOEFL Combined Resources
 import { ToeflReadingList, ToeflReadingEdit, ToeflReadingCreate } from './resources/toeflReading';
@@ -204,6 +205,14 @@ const AdminApp = () => {
         edit={ContactMessagesEdit}
         options={{ label: 'Contact email' }}
         recordRepresentation={(r) => `${r.subject} — ${r.email}`}
+      />
+      <Resource
+        name="cv"
+        list={CvList}
+        edit={CvEdit}
+        create={CvCreate}
+        options={{ label: 'CV' }}
+        recordRepresentation="cv_name"
       />
 
       {/* Section Tests */}

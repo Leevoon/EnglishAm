@@ -22,6 +22,7 @@ const membershipsRouter = require('./memberships');
 const userHistoryRouter = require('./userHistory');
 const homePageCategoriesRouter = require('./homePageCategories');
 const contactMessagesRouter = require('./contactMessages');
+const cvRouter = require('./cv');
 
 // TOEFL routes
 const toeflReadingRouter = require('./toeflReading');
@@ -72,6 +73,7 @@ router.use('/membership-access', verifyToken, membershipsRouter);
 router.use('/user-history', verifyToken, userHistoryRouter);
 router.use('/home-page-categories', verifyToken, homePageCategoriesRouter);
 router.use('/contact-messages', verifyToken, contactMessagesRouter);
+router.use('/cv', verifyToken, cvRouter);
 
 // TOEFL
 router.use('/toefl-reading', verifyToken, toeflReadingRouter);
