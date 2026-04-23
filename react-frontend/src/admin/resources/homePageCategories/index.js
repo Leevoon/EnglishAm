@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import {
   List, Datagrid, TextField, NumberField,
   Edit, Create, SimpleForm, TextInput, NumberInput, SelectInput,
-  EditButton, useWatch, required,
+  EditButton, required,
 } from 'react-admin';
+import { useWatch } from 'react-hook-form';
 import { StatusField } from '../../components';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
