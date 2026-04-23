@@ -101,7 +101,8 @@ export const homeAPI = {
   getTestimonials: (limit = 5) => api.get(`/home/testimonials?limit=${limit}`),
   getNews: (languageId = 1, limit = 3) => api.get(`/home/news?languageId=${languageId}&limit=${limit}`),
   getGallery: (limit = 6) => api.get(`/home/gallery?limit=${limit}`),
-  getPageImages: (keys) => api.get(`/home/page-images${keys ? `?keys=${keys}` : ''}`)
+  getPageImages: (keys) => api.get(`/home/page-images${keys ? `?keys=${keys}` : ''}`),
+  getCategories: (languageId = 1) => api.get(`/home/categories?languageId=${languageId}`)
 };
 
 // FAQ API

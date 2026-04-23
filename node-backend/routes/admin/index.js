@@ -20,6 +20,8 @@ const galleryRouter = require('./gallery');
 const membershipPlansRouter = require('./membershipPlans');
 const membershipsRouter = require('./memberships');
 const userHistoryRouter = require('./userHistory');
+const homePageCategoriesRouter = require('./homePageCategories');
+const contactMessagesRouter = require('./contactMessages');
 
 // TOEFL routes
 const toeflReadingRouter = require('./toeflReading');
@@ -68,6 +70,8 @@ router.use('/gallery', verifyToken, galleryRouter);
 router.use('/membership-plans', verifyToken, membershipPlansRouter);
 router.use('/membership-access', verifyToken, membershipsRouter);
 router.use('/user-history', verifyToken, userHistoryRouter);
+router.use('/home-page-categories', verifyToken, homePageCategoriesRouter);
+router.use('/contact-messages', verifyToken, contactMessagesRouter);
 
 // TOEFL
 router.use('/toefl-reading', verifyToken, toeflReadingRouter);

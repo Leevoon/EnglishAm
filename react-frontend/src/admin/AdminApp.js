@@ -25,6 +25,16 @@ import { GalleryList, GalleryEdit, GalleryCreate } from './resources/gallery';
 import { MembershipPlansList, MembershipPlansEdit, MembershipPlansCreate } from './resources/membershipPlans';
 import { MembershipAccessList, MembershipAccessEdit, MembershipAccessCreate } from './resources/membershipAccess';
 import { UserHistoryList } from './resources/userHistory';
+import {
+  HomePageCategoriesList,
+  HomePageCategoriesEdit,
+  HomePageCategoriesCreate,
+} from './resources/homePageCategories';
+import {
+  ContactMessagesList,
+  ContactMessagesShow,
+  ContactMessagesEdit,
+} from './resources/contactMessages';
 
 // TOEFL Combined Resources
 import { ToeflReadingList, ToeflReadingEdit, ToeflReadingCreate } from './resources/toeflReading';
@@ -175,6 +185,21 @@ const AdminApp = () => {
         edit={GalleryEdit}
         create={GalleryCreate}
         options={{ label: 'Gallery' }}
+      />
+      <Resource
+        name="home-page-categories"
+        list={HomePageCategoriesList}
+        edit={HomePageCategoriesEdit}
+        create={HomePageCategoriesCreate}
+        options={{ label: 'Home Page Categories' }}
+      />
+      <Resource
+        name="contact-messages"
+        list={ContactMessagesList}
+        show={ContactMessagesShow}
+        edit={ContactMessagesEdit}
+        options={{ label: 'Contact email' }}
+        recordRepresentation={(r) => `${r.subject} — ${r.email}`}
       />
 
       {/* Section Tests */}

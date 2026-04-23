@@ -93,8 +93,8 @@ const CustomMenu = () => (
 
     <SubMenu label="Catalog" icon={<LocalOfferIcon />}>
       <Menu.Item to="/categories" primaryText="Headers" leftIcon={<SubIcon />} />
-      <Menu.Item to="/choose-home-page-categories" primaryText="Choose Home Page Categories" leftIcon={<SubIcon />} />
-      <Menu.Item to="/test-filters" primaryText="Test Filters" leftIcon={<SubIcon />} />
+      <Menu.Item to="/home-page-categories" primaryText="Choose Home Page Categories" leftIcon={<SubIcon />} />
+      <Menu.Item to="/test-categories" primaryText="Test Filters" leftIcon={<SubIcon />} />
       <Menu.Item to="/test-levels" primaryText="Test Level" leftIcon={<SubIcon />} />
     </SubMenu>
 

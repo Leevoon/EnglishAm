@@ -195,4 +195,48 @@ router.get('/page-images', async (req, res) => {
   }
 });
 
+// Resolved list of categories pinned to the home page.
+// source_type=category   → joins category_label
+// source_type=lessons_filter → joins lessons_filters_label (+ seo_name for URL)
+router.get('/categories', async (req, res) => {
+  try {
+    const languageId = parseInt(req.query.languageId) || DEFAULT_LANGUAGE_ID;
+
+    const [rows] = await sequelize.query(`
+      SELECT
+        h.id,
+        h.source_type,
+        h.source_id,
+        h.icon,
+        h.color,
+        h.description,
+        h.sort_order,
+        CASE h.source_type
+          WHEN 'category'       THEN cl.value
+          WHEN 'lessons_filter' THEN lfl.name
+        END AS title,
+        CASE h.source_type
+          WHEN 'lessons_filter' THEN lfl.seo_name
+          ELSE NULL
+        END AS seo_name
+      FROM home_page_categories h
+      LEFT JOIN category_label cl
+        ON h.source_type = 'category'
+       AND cl.category_id = h.source_id
+       AND cl.language_id = :lang
+      LEFT JOIN lessons_filters_label lfl
+        ON h.source_type = 'lessons_filter'
+       AND lfl.lessons_filters_id = h.source_id
+       AND lfl.language_id = :lang
+      WHERE h.status = 1
+      ORDER BY h.sort_order ASC, h.id ASC
+    `, { replacements: { lang: languageId } });
+
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching home categories:', error);
+    res.status(500).json({ error: 'Failed to fetch home categories' });
+  }
+});
+
 module.exports = router;

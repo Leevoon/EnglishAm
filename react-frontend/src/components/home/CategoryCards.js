@@ -1,34 +1,32 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { homeAPI } from '../../services/api';
 import './CategoryCards.css';
 
+const buildPath = (item) => {
+  if (item.source_type === 'lessons_filter' && item.seo_name) {
+    return `/lessons/${item.seo_name}/0`;
+  }
+  if (item.source_type === 'category') {
+    return `/categories/${item.source_id}`;
+  }
+  return '/lessons';
+};
+
 const CategoryCards = () => {
-  const categories = [
-    {
-      id: 1,
-      title: 'new words',
-      description: 'Expand your vocabulary with our comprehensive word lists',
-      icon: '📚',
-      path: '/lessons',
-      color: '#4CAF50'
-    },
-    {
-      id: 2,
-      title: 'dialogs',
-      description: 'Practice real-life conversations and improve speaking',
-      icon: '💬',
-      path: '/training/speaking',
-      color: '#2196F3'
-    },
-    {
-      id: 3,
-      title: 'picture dictionary',
-      description: 'Learn words through visual associations',
-      icon: '🖼️',
-      path: '/tests/photo',
-      color: '#FF9800'
-    }
-  ];
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    homeAPI.getCategories()
+      .then((res) => { if (!cancelled) setCategories(res.data || []); })
+      .catch((err) => { console.error('Failed to load home categories', err); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  if (loading || categories.length === 0) return null;
 
   return (
     <section className="category-section">
@@ -37,19 +35,19 @@ const CategoryCards = () => {
           <span className="section-label">choose a category</span>
           <h2 className="section-title">learn a language with us</h2>
         </div>
-        
+
         <div className="category-grid">
           {categories.map((category) => (
-            <Link 
-              to={category.path} 
-              key={category.id} 
+            <Link
+              to={buildPath(category)}
+              key={category.id}
               className="category-card"
-              style={{ '--card-color': category.color }}
+              style={{ '--card-color': category.color || '#4CAF50' }}
             >
               <div className="category-icon">
-                <span>{category.icon}</span>
+                <span>{category.icon || '📘'}</span>
               </div>
-              <h3 className="category-title">{category.title}</h3>
+              <h3 className="category-title">{(category.title || '').toLowerCase()}</h3>
               <p className="category-description">{category.description}</p>
               <span className="category-link">
                 Explore
