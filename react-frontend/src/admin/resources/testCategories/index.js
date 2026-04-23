@@ -4,6 +4,7 @@ import {
   Edit, Create, SimpleForm, TextInput, NumberInput, SelectInput,
   ReferenceInput, EditButton,
 } from 'react-admin';
+import { useSearchParams } from 'react-router-dom';
 import { Chip } from '@mui/material';
 import { StatusField } from '../../components';
 
@@ -30,23 +31,38 @@ const filters = [
   ]} />,
 ];
 
-export const TestCategoryList = () => (
-  <List filters={filters} sort={{ field: 'created_date', order: 'DESC' }} perPage={25}>
-    <Datagrid rowClick="edit">
-      <NumberField source="id" />
-      <TextField source="name" />
-      <MembershipChip />
-      <TextField source="parent_category_name" label="Parent Category" />
-      <TextField source="level_name" label="Level" />
-      <TextField source="time" />
-      <StatusField source="status" />
-      <DateField source="created_date" label="Created" showTime />
-      <NumberField source="sort_order" label="Order" />
-      <TextField source="image" />
-      <EditButton />
-    </Datagrid>
-  </List>
-);
+export const TestCategoryList = () => {
+  const [searchParams] = useSearchParams();
+  const isBrowse = searchParams.get('browse') === '1';
+
+  const rowClick = isBrowse
+    ? (id) =>
+        `/tests?filter=${encodeURIComponent(JSON.stringify({ test_category_id: id }))}`
+    : 'edit';
+
+  return (
+    <List
+      filters={filters}
+      sort={{ field: 'created_date', order: 'DESC' }}
+      perPage={25}
+      title={isBrowse ? 'Tests — pick a category' : undefined}
+    >
+      <Datagrid rowClick={rowClick}>
+        <NumberField source="id" />
+        <TextField source="name" />
+        <MembershipChip />
+        <TextField source="parent_category_name" label="Parent Category" />
+        <TextField source="level_name" label="Level" />
+        <TextField source="time" />
+        <StatusField source="status" />
+        <DateField source="created_date" label="Created" showTime />
+        <NumberField source="sort_order" label="Order" />
+        <TextField source="image" />
+        <EditButton />
+      </Datagrid>
+    </List>
+  );
+};
 
 export const TestCategoryEdit = () => (
   <Edit>

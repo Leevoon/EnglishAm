@@ -99,7 +99,7 @@ const CustomMenu = () => (
     </SubMenu>
 
     <SubMenu label="Tests" icon={<QuizIcon />}>
-      <Menu.Item to="/tests" primaryText="Tests" leftIcon={<SubIcon />} />
+      <Menu.Item to="/categories?browse=1" primaryText="Tests" leftIcon={<SubIcon />} />
       <Menu.Item to="/toefl" primaryText="Toefl" leftIcon={<SubIcon />} />
       <Menu.Item to="/ielts" primaryText="IELTS" leftIcon={<SubIcon />} />
       <Menu.Item to="/overall-english" primaryText="Overall English" leftIcon={<SubIcon />} />
