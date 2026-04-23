@@ -1,6 +1,6 @@
 import React from 'react';
-import { Admin, Resource } from 'react-admin';
-import { BrowserRouter } from 'react-router-dom';
+import { Admin, Resource, CustomRoutes } from 'react-admin';
+import { BrowserRouter, Route } from 'react-router-dom';
 
 // Providers
 import dataProvider from './dataProvider';
@@ -70,6 +70,9 @@ import {
 
 // Dashboard
 import Dashboard from './Dashboard';
+
+// Landing pages
+import ToeflLanding from './pages/ToeflLanding';
 
 const AdminApp = () => {
   return (
@@ -355,6 +358,10 @@ const AdminApp = () => {
         options={{ label: 'IELTS Writing' }}
         recordRepresentation="name"
       />
+
+      <CustomRoutes>
+        <Route path="/toefl" element={<ToeflLanding />} />
+      </CustomRoutes>
     </Admin>
     </BrowserRouter>
   );
