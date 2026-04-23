@@ -73,6 +73,7 @@ import Dashboard from './Dashboard';
 
 // Landing pages
 import ToeflLanding from './pages/ToeflLanding';
+import IeltsLanding from './pages/IeltsLanding';
 
 const AdminApp = () => {
   return (
@@ -361,6 +362,7 @@ const AdminApp = () => {
 
       <CustomRoutes>
         <Route path="/toefl" element={<ToeflLanding />} />
+        <Route path="/ielts" element={<IeltsLanding />} />
       </CustomRoutes>
     </Admin>
     </BrowserRouter>
