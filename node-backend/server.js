@@ -31,7 +31,6 @@ if (useMock) {
   app.use('/api/toefl', require('./routes/toefl'));
   app.use('/api/ielts', require('./routes/ielts'));
   app.use('/api/content', require('./routes/content'));
-  app.use('/api/ads', require('./routes/ads'));
   app.use('/api/auth', require('./routes/auth'));
   app.use('/api/home', require('./routes/home'));
   app.use('/api/faq', require('./routes/faq'));

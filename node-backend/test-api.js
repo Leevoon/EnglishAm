@@ -270,13 +270,6 @@ async function testAuthRoutes() {
   }
 }
 
-async function testAdsRoutes() {
-  console.log(`\n${colors.cyan}=== Ads Routes ===${colors.reset}`);
-  
-  await test('Get ad for test', '/ads/test/1', 'GET', null,
-    (data) => data === null || typeof data === 'object' || 'Expected null or object');
-}
-
 async function testLanguageParameter() {
   console.log(`\n${colors.cyan}=== Language Parameter Tests ===${colors.reset}`);
   
@@ -318,7 +311,6 @@ async function runAllTests() {
   await testToeflRoutes();
   await testIeltsRoutes();
   await testAuthRoutes();
-  await testAdsRoutes();
   await testLanguageParameter();
   await testPagination();
   

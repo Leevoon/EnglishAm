@@ -76,11 +76,6 @@ export const contentAPI = {
   sendContact: (data) => api.post('/content/contact/send', data)
 };
 
-// Ads API
-export const adsAPI = {
-  getTestAd: (testId) => api.get(`/ads/test/${testId}`)
-};
-
 // Auth API
 export const authAPI = {
   register: (userData) => api.post('/auth/register', userData),

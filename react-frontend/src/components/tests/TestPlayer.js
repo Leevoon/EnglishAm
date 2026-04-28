@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import AudioTest from './AudioTest';
-import AdComponent from './AdComponent';
 import './TestPlayer.css';
 
-const TestPlayer = ({ tests, testCategoryId, onTestComplete }) => {
+const TestPlayer = ({ tests, onTestComplete }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [answers, setAnswers] = useState({});
   const [showResults, setShowResults] = useState(false);
@@ -78,9 +77,6 @@ const TestPlayer = ({ tests, testCategoryId, onTestComplete }) => {
 
   return (
     <div className="test-container">
-      <div className="test-sidebar">
-        <AdComponent testId={testCategoryId} />
-      </div>
       <div className="test-content">
         <div className="test-header">
           <h3>Test Question {currentPage + 1} of {totalPages}</h3>

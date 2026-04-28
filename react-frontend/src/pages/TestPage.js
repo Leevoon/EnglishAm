@@ -85,7 +85,6 @@ const TestPage = () => {
         )}
         <TestPlayer
           tests={testData.tests}
-          testCategoryId={testId}
           onTestComplete={handleTestComplete}
         />
       </div>

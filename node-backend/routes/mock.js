@@ -740,16 +740,6 @@ router.post('/ielts/:section/:id/submit', (req, res) => {
   res.json({ success: true, message: 'Answers submitted', score: 0 });
 });
 
-// ==================== ADS ====================
-
-router.get('/ads/test/:testId', (req, res) => {
-  res.json(null);
-});
-
-router.get('/ads', (req, res) => {
-  res.json([]);
-});
-
 // ==================== SETTINGS, SOCIALS, TRANSLATIONS ====================
 
 router.get('/settings', (req, res) => {
