@@ -173,6 +173,8 @@ router.get('/:testId', optionalAuth, async (req, res) => {
   try {
     const { testId } = req.params;
     const languageId = req.query.languageId || DEFAULT_LANGUAGE_ID;
+    const sequelize = require('../config/database');
+    const { QueryTypes } = require('sequelize');
 
     const { getRequiredLevel, getUserMembershipLevel } = require('../middleware/membershipAccess');
     const requiredLevel = await getRequiredLevel(testId, 'test');
@@ -188,33 +190,64 @@ router.get('/:testId', optionalAuth, async (req, res) => {
       }
     }
 
-    const testCategory = await TestCategory.findByPk(testId, {
-      include: [{
-        model: TestCategoryLabel,
-        as: 'labels',
-        where: { language_id: languageId },
-        required: false
-      }]
+    const testCategoryRows = await sequelize.query(`
+      SELECT tc.*, tcl.name, tcl.description, tcl.seo_name
+      FROM test_category tc
+      LEFT JOIN test_category_label tcl
+        ON tcl.test_category_id = tc.id AND tcl.language_id = :languageId
+      WHERE tc.id = :testId
+    `, {
+      replacements: { testId, languageId },
+      type: QueryTypes.SELECT
     });
 
-    if (!testCategory) {
+    const testCategoryRow = testCategoryRows[0];
+    if (!testCategoryRow) {
       return res.status(404).json({ error: 'Test not found' });
     }
 
-    // Get test questions for this test category
-    const tests = await Test.findAll({
-      where: { parent_id: testCategory.id, status: 1 },
-      include: [{
-        model: TestAnswer,
-        as: 'answers'
-      }, {
-        model: require('../models/TestLabel'),
-        as: 'labels',
-        where: { language_id: languageId },
-        required: false
-      }],
-      order: [['sort_order', 'ASC']]
+    const testCategory = {
+      ...testCategoryRow,
+      labels: testCategoryRow.name != null
+        ? [{ name: testCategoryRow.name, description: testCategoryRow.description, seo_name: testCategoryRow.seo_name, language_id: parseInt(languageId) }]
+        : []
+    };
+
+    const tests = await sequelize.query(`
+      SELECT t.id, t.parent_id, t.status, t.sort_order, t.image, t.audio,
+             t.question_type, t.answer_type,
+             COALESCE(tl.value, t.question) AS question
+      FROM test t
+      LEFT JOIN test_label tl
+        ON tl.test_id = t.id AND tl.language_id = :languageId
+      WHERE t.parent_id = :testCategoryId
+      ORDER BY t.sort_order ASC, t.id ASC
+    `, {
+      replacements: { testCategoryId: testCategoryRow.id, languageId },
+      type: QueryTypes.SELECT
     });
+
+    if (tests.length > 0) {
+      const testIds = tests.map(t => t.id);
+      const answers = await sequelize.query(`
+        SELECT id, test_id, value, true_false
+        FROM test_answer
+        WHERE test_id IN (:testIds)
+        ORDER BY id ASC
+      `, {
+        replacements: { testIds },
+        type: QueryTypes.SELECT
+      });
+
+      const answersByTest = {};
+      for (const a of answers) {
+        if (!answersByTest[a.test_id]) answersByTest[a.test_id] = [];
+        answersByTest[a.test_id].push(a);
+      }
+      for (const t of tests) {
+        t.answers = answersByTest[t.id] || [];
+      }
+    }
 
     res.json({
       testCategory,

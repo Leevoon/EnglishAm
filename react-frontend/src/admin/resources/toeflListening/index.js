@@ -6,7 +6,7 @@ import {
 import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
   Box, Card, CardContent, CardHeader, Typography, Chip,
-  Table, TableHead, TableBody, TableRow, TableCell,
+  Table, TableHead, TableBody, TableRow, TableCell, Divider,
   TextField, Button, Switch, FormControlLabel, MenuItem,
   Stack, CircularProgress, Alert,
 } from '@mui/material';
@@ -32,17 +32,24 @@ export const ToeflListeningList = () => {
         dataProvider.getList('toefl-listening-tests', { pagination: { page: 1, perPage: 1000 }, sort: { field: 'id', order: 'ASC' }, filter: {} }),
         dataProvider.getList('toefl-listening-questions', { pagination: { page: 1, perPage: 1000 }, sort: { field: 'id', order: 'ASC' }, filter: {} }),
       ]);
-      const partMap = {};
-      partsRes.data.forEach(p => { partMap[p.toefl_listening_id] = p; });
+      const partsBySection = {};
+      partsRes.data.forEach(p => {
+        if (!partsBySection[p.toefl_listening_id]) partsBySection[p.toefl_listening_id] = [];
+        partsBySection[p.toefl_listening_id].push(p);
+      });
       const qCountMap = {};
       questionsRes.data.forEach(q => {
         qCountMap[q.toefl_listening_test_id] = (qCountMap[q.toefl_listening_test_id] || 0) + 1;
       });
-      setRows(sectionsRes.data.map(s => ({
-        ...s,
-        partAudio: partMap[s.id]?.audio || '-',
-        questionCount: partMap[s.id] ? (qCountMap[partMap[s.id].id] || 0) : 0,
-      })));
+      setRows(sectionsRes.data.map(s => {
+        const sectionParts = partsBySection[s.id] || [];
+        return {
+          ...s,
+          partAudio: sectionParts[0]?.audio || '-',
+          partCount: sectionParts.length,
+          questionCount: sectionParts.reduce((sum, p) => sum + (qCountMap[p.id] || 0), 0),
+        };
+      }));
       setLoading(false);
     };
     fetchAll().catch(() => setLoading(false));
@@ -127,8 +134,8 @@ export const ToeflListeningEdit = () => {
   const navigate = useNavigate();
 
   const [section, setSection] = useState(null);
-  const [part, setPart] = useState(null);
-  const [questions, setQuestions] = useState([]);
+  const [parts, setParts] = useState([]);
+  const [questionsByPart, setQuestionsByPart] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState({});
 
@@ -137,14 +144,14 @@ export const ToeflListeningEdit = () => {
       const { data: sectionData } = await dataProvider.getOne('toefl-listening', { id });
       setSection(sectionData);
 
-      const { data: parts } = await dataProvider.getList('toefl-listening-tests', {
+      const { data: partList } = await dataProvider.getList('toefl-listening-tests', {
         pagination: { page: 1, perPage: 1000 }, sort: { field: 'id', order: 'ASC' },
         filter: { toefl_listening_id: id },
       });
-      const p = parts[0] || null;
-      setPart(p);
+      setParts(partList);
 
-      if (p) {
+      const qByPart = {};
+      await Promise.all(partList.map(async (p) => {
         const { data: qs } = await dataProvider.getList('toefl-listening-questions', {
           pagination: { page: 1, perPage: 1000 }, sort: { field: 'sort_order', order: 'ASC' },
           filter: { toefl_listening_test_id: p.id },
@@ -152,8 +159,9 @@ export const ToeflListeningEdit = () => {
         const fullQuestions = await Promise.all(
           qs.map(q => dataProvider.getOne('toefl-listening-questions', { id: q.id }).then(r => r.data))
         );
-        setQuestions(fullQuestions);
-      }
+        qByPart[p.id] = fullQuestions;
+      }));
+      setQuestionsByPart(qByPart);
       setLoading(false);
     } catch (error) {
       notify('Error loading data', { type: 'error' });
@@ -172,56 +180,85 @@ export const ToeflListeningEdit = () => {
     setSaving(p => ({ ...p, section: false }));
   };
 
-  const savePart = async () => {
-    setSaving(p => ({ ...p, part: true }));
+  const updatePartField = (partId, field, value) => {
+    setParts(prev => prev.map(p => p.id === partId ? { ...p, [field]: value } : p));
+  };
+
+  const savePart = async (partId) => {
+    const part = parts.find(p => p.id === partId);
+    if (!part) return;
+    setSaving(p => ({ ...p, [`p_${partId}`]: true }));
     try {
-      await dataProvider.update('toefl-listening-tests', { id: part.id, data: part, previousData: part });
+      await dataProvider.update('toefl-listening-tests', { id: partId, data: part, previousData: part });
       notify('Part saved', { type: 'success' });
     } catch (e) { notify('Error saving part', { type: 'error' }); }
-    setSaving(p => ({ ...p, part: false }));
+    setSaving(p => ({ ...p, [`p_${partId}`]: false }));
   };
 
   const createPart = async () => {
-    setSaving(p => ({ ...p, part: true }));
+    setSaving(p => ({ ...p, addPart: true }));
     try {
       const { data } = await dataProvider.create('toefl-listening-tests', {
         data: { toefl_listening_id: parseInt(id), audio: '', image: '', status: 1 },
       });
-      setPart(data);
+      setParts(prev => [...prev, data]);
+      setQuestionsByPart(prev => ({ ...prev, [data.id]: [] }));
       notify('Part created', { type: 'success' });
     } catch (e) { notify('Error creating part', { type: 'error' }); }
-    setSaving(p => ({ ...p, part: false }));
+    setSaving(p => ({ ...p, addPart: false }));
   };
 
-  const saveQuestion = async (questionData) => {
+  const deletePart = async (partId) => {
+    if (!window.confirm('Delete this part and all its questions?')) return;
+    try {
+      await dataProvider.delete('toefl-listening-tests', { id: partId, previousData: parts.find(p => p.id === partId) });
+      setParts(prev => prev.filter(p => p.id !== partId));
+      setQuestionsByPart(prev => {
+        const next = { ...prev };
+        delete next[partId];
+        return next;
+      });
+      notify('Part deleted', { type: 'success' });
+    } catch (e) { notify('Error deleting part', { type: 'error' }); }
+  };
+
+  const saveQuestion = (partId) => async (questionData) => {
     const qId = questionData.id;
     setSaving(p => ({ ...p, [`q_${qId}`]: true }));
     try {
-      await dataProvider.update('toefl-listening-questions', { id: qId, data: questionData, previousData: questions.find(q => q.id === qId) });
-      setQuestions(prev => prev.map(q => q.id === qId ? questionData : q));
+      const prevQ = (questionsByPart[partId] || []).find(q => q.id === qId);
+      await dataProvider.update('toefl-listening-questions', { id: qId, data: questionData, previousData: prevQ });
+      setQuestionsByPart(prev => ({
+        ...prev,
+        [partId]: (prev[partId] || []).map(q => q.id === qId ? questionData : q),
+      }));
       notify('Question saved', { type: 'success' });
     } catch (e) { notify('Error saving question', { type: 'error' }); }
     setSaving(p => ({ ...p, [`q_${qId}`]: false }));
   };
 
-  const addQuestion = async () => {
-    if (!part) return;
-    setSaving(p => ({ ...p, addQ: true }));
+  const addQuestion = async (partId) => {
+    setSaving(p => ({ ...p, [`addQ_${partId}`]: true }));
     try {
+      const existing = questionsByPart[partId] || [];
       const { data } = await dataProvider.create('toefl-listening-questions', {
-        data: { toefl_listening_test_id: part.id, question: '', audio: '', status: 1, sort_order: questions.length, answers: [] },
+        data: { toefl_listening_test_id: partId, question: '', audio: '', status: 1, sort_order: existing.length, answers: [] },
       });
       const { data: fullQ } = await dataProvider.getOne('toefl-listening-questions', { id: data.id });
-      setQuestions(prev => [...prev, fullQ]);
+      setQuestionsByPart(prev => ({ ...prev, [partId]: [...(prev[partId] || []), fullQ] }));
       notify('Question added', { type: 'success' });
     } catch (e) { notify('Error adding question', { type: 'error' }); }
-    setSaving(p => ({ ...p, addQ: false }));
+    setSaving(p => ({ ...p, [`addQ_${partId}`]: false }));
   };
 
-  const deleteQuestion = async (qId) => {
+  const deleteQuestion = (partId) => async (qId) => {
     try {
-      await dataProvider.delete('toefl-listening-questions', { id: qId, previousData: questions.find(q => q.id === qId) });
-      setQuestions(prev => prev.filter(q => q.id !== qId));
+      const prevQ = (questionsByPart[partId] || []).find(q => q.id === qId);
+      await dataProvider.delete('toefl-listening-questions', { id: qId, previousData: prevQ });
+      setQuestionsByPart(prev => ({
+        ...prev,
+        [partId]: (prev[partId] || []).filter(q => q.id !== qId),
+      }));
       notify('Question deleted', { type: 'success' });
     } catch (e) { notify('Error deleting question', { type: 'error' }); }
   };
@@ -260,66 +297,86 @@ export const ToeflListeningEdit = () => {
         </CardContent>
       </Card>
 
-      {/* Part (Audio & Image) */}
-      <Card sx={{ mx: 2, mb: 2 }}>
-        <CardHeader title="Audio & Media" titleTypographyProps={{ variant: 'h6' }} />
-        <CardContent>
-          {part ? (
-            <Stack spacing={2}>
-              <TextField label="Audio File URL" value={part.audio || ''} onChange={e => setPart(prev => ({ ...prev, audio: e.target.value }))} fullWidth />
-              <TextField label="Image URL" value={part.image || ''} onChange={e => setPart(prev => ({ ...prev, image: e.target.value }))} fullWidth />
-              <FormControlLabel
-                control={<Switch checked={part.status === 1} onChange={e => setPart(prev => ({ ...prev, status: e.target.checked ? 1 : 0 }))} />}
-                label={part.status === 1 ? 'Active' : 'Inactive'}
-              />
-              <Button variant="contained" startIcon={saving.part ? <CircularProgress size={16} /> : <SaveIcon />} onClick={savePart} disabled={saving.part} sx={{ alignSelf: 'flex-start' }}>
-                Save Part
-              </Button>
-            </Stack>
-          ) : (
+      {/* Parts */}
+      {parts.length === 0 ? (
+        <Card sx={{ mx: 2, mb: 2 }}>
+          <CardHeader title="Listening Parts" titleTypographyProps={{ variant: 'h6' }} />
+          <CardContent>
             <Box sx={{ textAlign: 'center', py: 3 }}>
-              <Typography color="text.secondary" gutterBottom>No part yet for this section.</Typography>
-              <Button variant="contained" startIcon={<AddIcon />} onClick={createPart} disabled={saving.part}>
+              <Typography color="text.secondary" gutterBottom>No parts yet for this section.</Typography>
+              <Button variant="contained" startIcon={<AddIcon />} onClick={createPart} disabled={saving.addPart}>
                 Create Part
               </Button>
             </Box>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Questions */}
-      <Card sx={{ mx: 2, mb: 2 }}>
-        <CardHeader
-          title={`Questions (${questions.length})`}
-          titleTypographyProps={{ variant: 'h6' }}
-          action={
-            <Button startIcon={saving.addQ ? <CircularProgress size={16} /> : <AddIcon />} onClick={addQuestion} disabled={!part || saving.addQ}>
-              Add Question
-            </Button>
-          }
-        />
-        <CardContent>
-          {questions.length === 0 ? (
-            <Typography color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
-              {part ? 'No questions yet.' : 'Create a part first to add questions.'}
-            </Typography>
-          ) : (
-            questions.map((q, idx) => (
-              <QuestionAccordion
-                key={q.id}
-                question={q}
-                index={idx}
-                saving={saving[`q_${q.id}`]}
-                onSave={saveQuestion}
-                onDelete={deleteQuestion}
-                questionField="question"
-                answerTextField="value"
-                extraFields={[{ name: 'audio', label: 'Audio File URL' }]}
+          </CardContent>
+        </Card>
+      ) : (
+        parts.map((part, pIdx) => {
+          const pQuestions = questionsByPart[part.id] || [];
+          return (
+            <Card key={part.id} sx={{ mx: 2, mb: 2 }}>
+              <CardHeader
+                title={`Part #${pIdx + 1}`}
+                titleTypographyProps={{ variant: 'h6' }}
+                action={
+                  <Button size="small" color="error" startIcon={<DeleteIcon />} onClick={() => deletePart(part.id)}>
+                    Delete Part
+                  </Button>
+                }
               />
-            ))
-          )}
-        </CardContent>
-      </Card>
+              <CardContent>
+                <Stack spacing={2}>
+                  <TextField label="Audio File URL" value={part.audio || ''} onChange={e => updatePartField(part.id, 'audio', e.target.value)} fullWidth />
+                  <TextField label="Image URL" value={part.image || ''} onChange={e => updatePartField(part.id, 'image', e.target.value)} fullWidth />
+                  <FormControlLabel
+                    control={<Switch checked={part.status === 1} onChange={e => updatePartField(part.id, 'status', e.target.checked ? 1 : 0)} />}
+                    label={part.status === 1 ? 'Active' : 'Inactive'}
+                  />
+                  <Button variant="contained" startIcon={saving[`p_${part.id}`] ? <CircularProgress size={16} /> : <SaveIcon />} onClick={() => savePart(part.id)} disabled={saving[`p_${part.id}`]} sx={{ alignSelf: 'flex-start' }}>
+                    Save Part
+                  </Button>
+
+                  <Divider sx={{ my: 1 }} />
+
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Typography variant="subtitle1">Questions ({pQuestions.length})</Typography>
+                    <Button size="small" startIcon={saving[`addQ_${part.id}`] ? <CircularProgress size={16} /> : <AddIcon />} onClick={() => addQuestion(part.id)} disabled={saving[`addQ_${part.id}`]}>
+                      Add Question
+                    </Button>
+                  </Box>
+                  {pQuestions.length === 0 ? (
+                    <Typography color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+                      No questions yet. Click "Add Question" to create one.
+                    </Typography>
+                  ) : (
+                    pQuestions.map((q, idx) => (
+                      <QuestionAccordion
+                        key={q.id}
+                        question={q}
+                        index={idx}
+                        saving={saving[`q_${q.id}`]}
+                        onSave={saveQuestion(part.id)}
+                        onDelete={deleteQuestion(part.id)}
+                        questionField="question"
+                        answerTextField="value"
+                        extraFields={[{ name: 'audio', label: 'Audio File URL' }]}
+                      />
+                    ))
+                  )}
+                </Stack>
+              </CardContent>
+            </Card>
+          );
+        })
+      )}
+
+      {parts.length > 0 && (
+        <Box sx={{ px: 2, mb: 2 }}>
+          <Button variant="outlined" startIcon={saving.addPart ? <CircularProgress size={16} /> : <AddIcon />} onClick={createPart} disabled={saving.addPart}>
+            Add Another Part
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 };

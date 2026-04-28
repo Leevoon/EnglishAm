@@ -6,7 +6,7 @@ import {
 import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
   Box, Card, CardContent, CardHeader, Typography, Chip,
-  Table, TableHead, TableBody, TableRow, TableCell,
+  Table, TableHead, TableBody, TableRow, TableCell, Divider,
   TextField, Button, Switch, FormControlLabel, MenuItem,
   Stack, CircularProgress, Alert,
 } from '@mui/material';
@@ -32,17 +32,25 @@ export const ToeflReadingList = () => {
         dataProvider.getList('toefl-reading-tests', { pagination: { page: 1, perPage: 1000 }, sort: { field: 'id', order: 'ASC' }, filter: {} }),
         dataProvider.getList('toefl-reading-questions', { pagination: { page: 1, perPage: 1000 }, sort: { field: 'id', order: 'ASC' }, filter: {} }),
       ]);
-      const passageMap = {};
-      passagesRes.data.forEach(p => { passageMap[p.toefl_reding_id] = p; });
+      const passagesBySection = {};
+      passagesRes.data.forEach(p => {
+        if (!passagesBySection[p.toefl_reding_id]) passagesBySection[p.toefl_reding_id] = [];
+        passagesBySection[p.toefl_reding_id].push(p);
+      });
       const qCountMap = {};
       questionsRes.data.forEach(q => {
         qCountMap[q.toefl_reading_test_id] = (qCountMap[q.toefl_reading_test_id] || 0) + 1;
       });
-      setRows(sectionsRes.data.map(s => ({
-        ...s,
-        passagePreview: passageMap[s.id] ? stripHtml(passageMap[s.id].text).substring(0, 150) : '(no passage)',
-        questionCount: passageMap[s.id] ? (qCountMap[passageMap[s.id].id] || 0) : 0,
-      })));
+      setRows(sectionsRes.data.map(s => {
+        const sectionPassages = passagesBySection[s.id] || [];
+        const firstText = sectionPassages[0]?.text;
+        return {
+          ...s,
+          passagePreview: firstText ? stripHtml(firstText).substring(0, 150) : '(no passage)',
+          passageCount: sectionPassages.length,
+          questionCount: sectionPassages.reduce((sum, p) => sum + (qCountMap[p.id] || 0), 0),
+        };
+      }));
       setLoading(false);
     };
     fetchAll().catch(() => setLoading(false));
@@ -131,26 +139,27 @@ export const ToeflReadingEdit = () => {
   const navigate = useNavigate();
 
   const [section, setSection] = useState(null);
-  const [passage, setPassage] = useState(null);
-  const [questions, setQuestions] = useState([]);
+  const [passages, setPassages] = useState([]);
+  const [questionsByPassage, setQuestionsByPassage] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState({});
-  const passageTextRef = useRef('');
+  const passageTextRefs = useRef({});
 
   const fetchData = useCallback(async () => {
     try {
       const { data: sectionData } = await dataProvider.getOne('toefl-reading', { id });
       setSection(sectionData);
 
-      const { data: passages } = await dataProvider.getList('toefl-reading-tests', {
+      const { data: passageList } = await dataProvider.getList('toefl-reading-tests', {
         pagination: { page: 1, perPage: 1000 }, sort: { field: 'id', order: 'ASC' },
         filter: { toefl_reding_id: id },
       });
-      const p = passages[0] || null;
-      setPassage(p);
-      passageTextRef.current = p?.text || '';
+      setPassages(passageList);
+      passageTextRefs.current = {};
+      passageList.forEach(p => { passageTextRefs.current[p.id] = p.text || ''; });
 
-      if (p) {
+      const qByPassage = {};
+      await Promise.all(passageList.map(async (p) => {
         const { data: qs } = await dataProvider.getList('toefl-reading-questions', {
           pagination: { page: 1, perPage: 1000 }, sort: { field: 'sort_order', order: 'ASC' },
           filter: { toefl_reading_test_id: p.id },
@@ -158,8 +167,9 @@ export const ToeflReadingEdit = () => {
         const fullQuestions = await Promise.all(
           qs.map(q => dataProvider.getOne('toefl-reading-questions', { id: q.id }).then(r => r.data))
         );
-        setQuestions(fullQuestions);
-      }
+        qByPassage[p.id] = fullQuestions;
+      }));
+      setQuestionsByPassage(qByPassage);
       setLoading(false);
     } catch (error) {
       notify('Error loading data', { type: 'error' });
@@ -178,59 +188,89 @@ export const ToeflReadingEdit = () => {
     setSaving(p => ({ ...p, section: false }));
   };
 
-  const savePassage = async () => {
-    setSaving(p => ({ ...p, passage: true }));
+  const updatePassageField = (passageId, field, value) => {
+    setPassages(prev => prev.map(p => p.id === passageId ? { ...p, [field]: value } : p));
+  };
+
+  const savePassage = async (passageId) => {
+    const passage = passages.find(p => p.id === passageId);
+    if (!passage) return;
+    setSaving(p => ({ ...p, [`p_${passageId}`]: true }));
     try {
-      const data = { ...passage, text: passageTextRef.current };
-      await dataProvider.update('toefl-reading-tests', { id: passage.id, data, previousData: passage });
-      setPassage(data);
+      const data = { ...passage, text: passageTextRefs.current[passageId] ?? passage.text };
+      await dataProvider.update('toefl-reading-tests', { id: passageId, data, previousData: passage });
+      setPassages(prev => prev.map(p => p.id === passageId ? data : p));
       notify('Passage saved', { type: 'success' });
     } catch (e) { notify('Error saving passage', { type: 'error' }); }
-    setSaving(p => ({ ...p, passage: false }));
+    setSaving(p => ({ ...p, [`p_${passageId}`]: false }));
   };
 
   const createPassage = async () => {
-    setSaving(p => ({ ...p, passage: true }));
+    setSaving(p => ({ ...p, addPassage: true }));
     try {
       const { data } = await dataProvider.create('toefl-reading-tests', {
-        data: { toefl_reding_id: parseInt(id), text: '<p></p>', status: 1, sort_order: 0 },
+        data: { toefl_reding_id: parseInt(id), text: '<p></p>', status: 1, sort_order: passages.length },
       });
-      setPassage(data);
-      passageTextRef.current = data.text || '';
+      setPassages(prev => [...prev, data]);
+      passageTextRefs.current[data.id] = data.text || '';
+      setQuestionsByPassage(prev => ({ ...prev, [data.id]: [] }));
       notify('Passage created', { type: 'success' });
     } catch (e) { notify('Error creating passage', { type: 'error' }); }
-    setSaving(p => ({ ...p, passage: false }));
+    setSaving(p => ({ ...p, addPassage: false }));
   };
 
-  const saveQuestion = async (questionData) => {
+  const deletePassage = async (passageId) => {
+    if (!window.confirm('Delete this passage and all its questions?')) return;
+    try {
+      await dataProvider.delete('toefl-reading-tests', { id: passageId, previousData: passages.find(p => p.id === passageId) });
+      setPassages(prev => prev.filter(p => p.id !== passageId));
+      setQuestionsByPassage(prev => {
+        const next = { ...prev };
+        delete next[passageId];
+        return next;
+      });
+      delete passageTextRefs.current[passageId];
+      notify('Passage deleted', { type: 'success' });
+    } catch (e) { notify('Error deleting passage', { type: 'error' }); }
+  };
+
+  const saveQuestion = (passageId) => async (questionData) => {
     const qId = questionData.id;
     setSaving(p => ({ ...p, [`q_${qId}`]: true }));
     try {
-      await dataProvider.update('toefl-reading-questions', { id: qId, data: questionData, previousData: questions.find(q => q.id === qId) });
-      setQuestions(prev => prev.map(q => q.id === qId ? questionData : q));
+      const prevQ = (questionsByPassage[passageId] || []).find(q => q.id === qId);
+      await dataProvider.update('toefl-reading-questions', { id: qId, data: questionData, previousData: prevQ });
+      setQuestionsByPassage(prev => ({
+        ...prev,
+        [passageId]: (prev[passageId] || []).map(q => q.id === qId ? questionData : q),
+      }));
       notify('Question saved', { type: 'success' });
     } catch (e) { notify('Error saving question', { type: 'error' }); }
     setSaving(p => ({ ...p, [`q_${qId}`]: false }));
   };
 
-  const addQuestion = async () => {
-    if (!passage) return;
-    setSaving(p => ({ ...p, addQ: true }));
+  const addQuestion = async (passageId) => {
+    setSaving(p => ({ ...p, [`addQ_${passageId}`]: true }));
     try {
+      const existing = questionsByPassage[passageId] || [];
       const { data } = await dataProvider.create('toefl-reading-questions', {
-        data: { toefl_reading_test_id: passage.id, text: '', status: 1, sort_order: questions.length, answers: [] },
+        data: { toefl_reading_test_id: passageId, text: '', status: 1, sort_order: existing.length, answers: [] },
       });
       const { data: fullQ } = await dataProvider.getOne('toefl-reading-questions', { id: data.id });
-      setQuestions(prev => [...prev, fullQ]);
+      setQuestionsByPassage(prev => ({ ...prev, [passageId]: [...(prev[passageId] || []), fullQ] }));
       notify('Question added', { type: 'success' });
     } catch (e) { notify('Error adding question', { type: 'error' }); }
-    setSaving(p => ({ ...p, addQ: false }));
+    setSaving(p => ({ ...p, [`addQ_${passageId}`]: false }));
   };
 
-  const deleteQuestion = async (qId) => {
+  const deleteQuestion = (passageId) => async (qId) => {
     try {
-      await dataProvider.delete('toefl-reading-questions', { id: qId, previousData: questions.find(q => q.id === qId) });
-      setQuestions(prev => prev.filter(q => q.id !== qId));
+      const prevQ = (questionsByPassage[passageId] || []).find(q => q.id === qId);
+      await dataProvider.delete('toefl-reading-questions', { id: qId, previousData: prevQ });
+      setQuestionsByPassage(prev => ({
+        ...prev,
+        [passageId]: (prev[passageId] || []).filter(q => q.id !== qId),
+      }));
       notify('Question deleted', { type: 'success' });
     } catch (e) { notify('Error deleting question', { type: 'error' }); }
   };
@@ -269,68 +309,92 @@ export const ToeflReadingEdit = () => {
         </CardContent>
       </Card>
 
-      {/* Passage Text */}
-      <Card sx={{ mx: 2, mb: 2 }}>
-        <CardHeader title="Passage Text" titleTypographyProps={{ variant: 'h6' }} />
-        <CardContent>
-          {passage ? (
-            <Stack spacing={2}>
-              <RichTextEditor key={passage.id} initialValue={passage.text} onChange={val => { passageTextRef.current = val; }} />
-              <Stack direction="row" spacing={2} alignItems="center">
-                <FormControlLabel
-                  control={<Switch checked={passage.status === 1} onChange={e => setPassage(prev => ({ ...prev, status: e.target.checked ? 1 : 0 }))} />}
-                  label={passage.status === 1 ? 'Active' : 'Inactive'}
-                />
-                <TextField label="Sort Order" type="number" value={passage.sort_order ?? 0} onChange={e => setPassage(prev => ({ ...prev, sort_order: parseInt(e.target.value) || 0 }))} sx={{ width: 150 }} size="small" />
-              </Stack>
-              <Button variant="contained" startIcon={saving.passage ? <CircularProgress size={16} /> : <SaveIcon />} onClick={savePassage} disabled={saving.passage} sx={{ alignSelf: 'flex-start' }}>
-                Save Passage
-              </Button>
-            </Stack>
-          ) : (
+      {/* Passages */}
+      {passages.length === 0 ? (
+        <Card sx={{ mx: 2, mb: 2 }}>
+          <CardHeader title="Passages" titleTypographyProps={{ variant: 'h6' }} />
+          <CardContent>
             <Box sx={{ textAlign: 'center', py: 3 }}>
-              <Typography color="text.secondary" gutterBottom>No passage yet for this section.</Typography>
-              <Button variant="contained" startIcon={<AddIcon />} onClick={createPassage} disabled={saving.passage}>
+              <Typography color="text.secondary" gutterBottom>No passages yet for this section.</Typography>
+              <Button variant="contained" startIcon={<AddIcon />} onClick={createPassage} disabled={saving.addPassage}>
                 Create Passage
               </Button>
             </Box>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Questions */}
-      <Card sx={{ mx: 2, mb: 2 }}>
-        <CardHeader
-          title={`Questions (${questions.length})`}
-          titleTypographyProps={{ variant: 'h6' }}
-          action={
-            <Button startIcon={saving.addQ ? <CircularProgress size={16} /> : <AddIcon />} onClick={addQuestion} disabled={!passage || saving.addQ}>
-              Add Question
-            </Button>
-          }
-        />
-        <CardContent>
-          {questions.length === 0 ? (
-            <Typography color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
-              {passage ? 'No questions yet. Click "Add Question" to create one.' : 'Create a passage first to add questions.'}
-            </Typography>
-          ) : (
-            questions.map((q, idx) => (
-              <QuestionAccordion
-                key={q.id}
-                question={q}
-                index={idx}
-                saving={saving[`q_${q.id}`]}
-                onSave={saveQuestion}
-                onDelete={deleteQuestion}
-                questionField="text"
-                answerTextField="text"
-                answerExplanationField="answer_question"
+          </CardContent>
+        </Card>
+      ) : (
+        passages.map((passage, pIdx) => {
+          const pQuestions = questionsByPassage[passage.id] || [];
+          return (
+            <Card key={passage.id} sx={{ mx: 2, mb: 2 }}>
+              <CardHeader
+                title={`Passage #${pIdx + 1}`}
+                titleTypographyProps={{ variant: 'h6' }}
+                action={
+                  <Button size="small" color="error" startIcon={<DeleteIcon />} onClick={() => deletePassage(passage.id)}>
+                    Delete Passage
+                  </Button>
+                }
               />
-            ))
-          )}
-        </CardContent>
-      </Card>
+              <CardContent>
+                <Stack spacing={2}>
+                  <RichTextEditor
+                    key={passage.id}
+                    initialValue={passage.text}
+                    onChange={val => { passageTextRefs.current[passage.id] = val; }}
+                  />
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <FormControlLabel
+                      control={<Switch checked={passage.status === 1} onChange={e => updatePassageField(passage.id, 'status', e.target.checked ? 1 : 0)} />}
+                      label={passage.status === 1 ? 'Active' : 'Inactive'}
+                    />
+                    <TextField label="Sort Order" type="number" value={passage.sort_order ?? 0} onChange={e => updatePassageField(passage.id, 'sort_order', parseInt(e.target.value) || 0)} sx={{ width: 150 }} size="small" />
+                  </Stack>
+                  <Button variant="contained" startIcon={saving[`p_${passage.id}`] ? <CircularProgress size={16} /> : <SaveIcon />} onClick={() => savePassage(passage.id)} disabled={saving[`p_${passage.id}`]} sx={{ alignSelf: 'flex-start' }}>
+                    Save Passage
+                  </Button>
+
+                  <Divider sx={{ my: 1 }} />
+
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Typography variant="subtitle1">Questions ({pQuestions.length})</Typography>
+                    <Button size="small" startIcon={saving[`addQ_${passage.id}`] ? <CircularProgress size={16} /> : <AddIcon />} onClick={() => addQuestion(passage.id)} disabled={saving[`addQ_${passage.id}`]}>
+                      Add Question
+                    </Button>
+                  </Box>
+                  {pQuestions.length === 0 ? (
+                    <Typography color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+                      No questions yet. Click "Add Question" to create one.
+                    </Typography>
+                  ) : (
+                    pQuestions.map((q, idx) => (
+                      <QuestionAccordion
+                        key={q.id}
+                        question={q}
+                        index={idx}
+                        saving={saving[`q_${q.id}`]}
+                        onSave={saveQuestion(passage.id)}
+                        onDelete={deleteQuestion(passage.id)}
+                        questionField="text"
+                        answerTextField="text"
+                        answerExplanationField="answer_question"
+                      />
+                    ))
+                  )}
+                </Stack>
+              </CardContent>
+            </Card>
+          );
+        })
+      )}
+
+      {passages.length > 0 && (
+        <Box sx={{ px: 2, mb: 2 }}>
+          <Button variant="outlined" startIcon={saving.addPassage ? <CircularProgress size={16} /> : <AddIcon />} onClick={createPassage} disabled={saving.addPassage}>
+            Add Another Passage
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 };
