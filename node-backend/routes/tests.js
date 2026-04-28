@@ -96,11 +96,11 @@ router.get('/levels', async (req, res) => {
 // Get filtered tests
 router.get('/', optionalAuth, async (req, res) => {
   try {
-    const { categoryId, levelId, variant, filter, page = 1, limit = 10 } = req.query;
+    const { categoryId, levelId, filter, page = 1, limit = 10 } = req.query;
     const languageId = req.query.languageId || DEFAULT_LANGUAGE_ID;
-    const { Op } = require('sequelize');
+    const sequelize = require('../config/database');
+    const { QueryTypes } = require('sequelize');
 
-    // Return empty results if no categoryId provided
     if (!categoryId) {
       return res.json({
         tests: [],
@@ -113,53 +113,59 @@ router.get('/', optionalAuth, async (req, res) => {
       });
     }
 
-    const whereClause = {
-      status: 1,
-      category_id: categoryId
-    };
+    const conditions = ['tc.status = 1', 'tc.category_id = :categoryId'];
+    const replacements = { categoryId, languageId };
 
     if (filter && filter !== 'all') {
-      whereClause.parent_id = filter;
+      conditions.push('tc.parent_id = :filter');
+      replacements.filter = filter;
     } else {
-      whereClause.parent_id = { [Op.ne]: 0 };
+      conditions.push('tc.parent_id != 0');
     }
 
     if (levelId && levelId !== '0') {
-      whereClause.level_id = levelId;
+      conditions.push('tc.level_id = :levelId');
+      replacements.levelId = levelId;
     }
 
-    if (variant && variant !== 'both') {
-      whereClause[Op.or] = [
-        { english_variant: variant },
-        { english_variant: 'both' }
-      ];
-    }
-
+    const whereSql = 'WHERE ' + conditions.join(' AND ');
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
-    const { count, rows } = await TestCategory.findAndCountAll({
-      where: whereClause,
-      include: [{
-        model: TestCategoryLabel,
-        as: 'labels',
-        where: { language_id: languageId },
-        required: false
-      }],
-      order: [['sort_order', 'ASC']],
-      limit: parseInt(limit),
-      offset: offset
+    const [countResult] = await sequelize.query(`
+      SELECT COUNT(*) AS total FROM test_category tc ${whereSql}
+    `, { replacements, type: QueryTypes.SELECT });
+
+    const rows = await sequelize.query(`
+      SELECT tc.id, tc.category_id, tc.parent_id, tc.status, tc.sort_order,
+             tc.time, tc.image, tc.level_id, tc.created_date,
+             tcl.name, tcl.description, tcl.seo_name
+      FROM test_category tc
+      LEFT JOIN test_category_label tcl
+        ON tcl.test_category_id = tc.id AND tcl.language_id = :languageId
+      ${whereSql}
+      ORDER BY tc.sort_order ASC, tc.id ASC
+      LIMIT :limit OFFSET :offset
+    `, {
+      replacements: { ...replacements, limit: parseInt(limit), offset },
+      type: QueryTypes.SELECT
     });
 
-    const plainRows = rows.map(r => r.get({ plain: true }));
+    const plainRows = rows.map(r => ({
+      ...r,
+      labels: r.name != null
+        ? [{ name: r.name, description: r.description, seo_name: r.seo_name, language_id: parseInt(languageId) }]
+        : []
+    }));
+
     const annotated = await annotateListWithAccess(plainRows, 'test', req.userId);
 
     res.json({
       tests: annotated,
       pagination: {
-        total: count,
+        total: countResult.total,
         page: parseInt(page),
         limit: parseInt(limit),
-        totalPages: Math.ceil(count / parseInt(limit))
+        totalPages: Math.ceil(countResult.total / parseInt(limit))
       }
     });
   } catch (error) {
