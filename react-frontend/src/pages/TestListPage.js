@@ -7,7 +7,7 @@ import './TestListPage.css';
 
 // Per-category filter configuration (matches admin panel)
 const categoryConfig = {
-  'audio':                { hasLevels: true,  hasVariant: true,  hasSubcategories: false },
+  'audio':                { hasLevels: true,  hasVariant: false, hasSubcategories: true },
   'synonyms':             { hasLevels: true,  hasVariant: false, hasSubcategories: false },
   'antonyms':             { hasLevels: true,  hasVariant: false, hasSubcategories: false },
   'general-english':      { hasLevels: true,  hasVariant: false, hasSubcategories: true },

@@ -121,29 +121,31 @@ router.get('/:id/subcategories', async (req, res) => {
 router.get('/:id/test-categories', async (req, res) => {
   try {
     const languageId = req.query.languageId || DEFAULT_LANGUAGE_ID;
-    const { TestCategory, TestCategoryLabel } = require('../models');
-    
-    const testCategories = await TestCategory.findAll({
-      where: {
-        category_id: req.params.id,
-        parent_id: 0,
-        status: 1
-      },
-      include: [{
-        model: TestCategoryLabel,
-        as: 'labels',
-        where: { language_id: languageId },
-        required: false
-      }],
-      order: [['sort_order', 'ASC']]
+    const sequelize = require('../config/database');
+    const { QueryTypes } = require('sequelize');
+
+    const rows = await sequelize.query(`
+      SELECT tc.id, tc.category_id, tc.parent_id, tc.sort_order,
+             tcl.name, tcl.description, tcl.seo_name
+      FROM test_category tc
+      LEFT JOIN test_category_label tcl
+        ON tcl.test_category_id = tc.id AND tcl.language_id = :languageId
+      WHERE tc.category_id = :categoryId AND tc.parent_id = 0 AND tc.status = 1
+      ORDER BY tc.sort_order ASC, tc.id ASC
+    `, {
+      replacements: { categoryId: req.params.id, languageId },
+      type: QueryTypes.SELECT
     });
 
-    const result = testCategories.map(tc => ({
-      id: tc.id,
-      name: tc.labels && tc.labels.length > 0 ? tc.labels[0].name : `Test ${tc.id}`,
-      description: tc.labels && tc.labels.length > 0 ? tc.labels[0].description : null,
-      categoryId: tc.category_id,
-      sortOrder: tc.sort_order
+    const result = rows.map(r => ({
+      id: r.id,
+      name: r.name || `Test ${r.id}`,
+      description: r.description || null,
+      categoryId: r.category_id,
+      sortOrder: r.sort_order,
+      labels: r.name != null
+        ? [{ name: r.name, description: r.description, seo_name: r.seo_name, language_id: parseInt(languageId) }]
+        : []
     }));
 
     res.json(result);
