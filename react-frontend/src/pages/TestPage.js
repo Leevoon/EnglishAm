@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { testsAPI } from '../services/api';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import TestPlayer from '../components/tests/TestPlayer';
 import './TestPage.css';
 
+const LEVEL_NAMES = { 1: 'Silver', 2: 'Gold' };
+
 const TestPage = () => {
   const { categoryId, testId } = useParams();
+  const navigate = useNavigate();
   const { currentLanguage } = useApp();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [testData, setTestData] = useState(null);
   const [loading, setLoading] = useState(true);
   const startTimeRef = useRef(Date.now());
@@ -25,6 +28,16 @@ const TestPage = () => {
       const response = await testsAPI.getTest(testId, currentLanguage.id);
       setTestData(response.data);
     } catch (error) {
+      if (error.response?.status === 403) {
+        if (!isAuthenticated) {
+          navigate('/login', { replace: true, state: { from: `/tests/${categoryId}/${testId}` } });
+          return;
+        }
+        const level = error.response.data?.required_level || 1;
+        alert(`This content requires a ${LEVEL_NAMES[level] || 'Premium'} membership. Please upgrade to access.`);
+        navigate(`/tests/${categoryId}`);
+        return;
+      }
       console.error('Error loading test:', error);
     } finally {
       setLoading(false);

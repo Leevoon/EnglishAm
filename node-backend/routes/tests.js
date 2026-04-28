@@ -169,10 +169,24 @@ router.get('/', optionalAuth, async (req, res) => {
 });
 
 // Get test details with questions and answers
-router.get('/:testId', async (req, res) => {
+router.get('/:testId', optionalAuth, async (req, res) => {
   try {
     const { testId } = req.params;
     const languageId = req.query.languageId || DEFAULT_LANGUAGE_ID;
+
+    const { getRequiredLevel, getUserMembershipLevel } = require('../middleware/membershipAccess');
+    const requiredLevel = await getRequiredLevel(testId, 'test');
+    if (requiredLevel > 0) {
+      const userLevel = await getUserMembershipLevel(req.userId);
+      if (userLevel < requiredLevel) {
+        return res.status(403).json({
+          error: 'Membership required',
+          required_level: requiredLevel,
+          user_level: userLevel,
+          message: 'Your membership level is not sufficient to access this content'
+        });
+      }
+    }
 
     const testCategory = await TestCategory.findByPk(testId, {
       include: [{
@@ -213,11 +227,26 @@ router.get('/:testId', async (req, res) => {
 });
 
 // Submit test answers
-router.post('/:testId/submit', async (req, res) => {
+router.post('/:testId/submit', optionalAuth, async (req, res) => {
   try {
     const { testId } = req.params;
     const { answers, userId, duration } = req.body; // Array of { test_id, answer_id }
     const sequelize = require('../config/database');
+
+    const { getRequiredLevel, getUserMembershipLevel } = require('../middleware/membershipAccess');
+    const requiredLevel = await getRequiredLevel(testId, 'test');
+    if (requiredLevel > 0) {
+      const effectiveUserId = req.userId || userId;
+      const userLevel = await getUserMembershipLevel(effectiveUserId);
+      if (userLevel < requiredLevel) {
+        return res.status(403).json({
+          error: 'Membership required',
+          required_level: requiredLevel,
+          user_level: userLevel,
+          message: 'Your membership level is not sufficient to access this content'
+        });
+      }
+    }
 
     // Calculate score
     let correctCount = 0;

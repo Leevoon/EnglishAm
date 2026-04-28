@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Login.css';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, guestLogin } = useAuth();
+  const from = location.state?.from || '/';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -20,9 +22,9 @@ const Login = () => {
     const cleanEmail = email.replace(/\s/g, '');
 
     const result = await login(cleanEmail, password);
-    
+
     if (result.success) {
-      navigate('/');
+      navigate(from, { replace: true });
     } else {
       setError(result.error || 'Invalid email or password');
     }
@@ -34,9 +36,9 @@ const Login = () => {
     setError('');
     setLoading(true);
     const result = await guestLogin();
-    
+
     if (result.success) {
-      navigate('/');
+      navigate(from, { replace: true });
     } else {
       setError(result.error || 'Guest login failed');
     }

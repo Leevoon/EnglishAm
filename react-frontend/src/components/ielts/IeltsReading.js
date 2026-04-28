@@ -19,7 +19,7 @@ const IeltsReading = () => {
   const { testId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [tests, setTests] = useState([]);
   const [selectedTest, setSelectedTest] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -110,6 +110,10 @@ const IeltsReading = () => {
       setResults(null);
     } catch (error) {
       if (error.response?.status === 403) {
+        if (!isAuthenticated) {
+          navigate('/login', { replace: true, state: { from: `${basePath}/${id}` } });
+          return;
+        }
         const level = error.response.data?.required_level || 1;
         alert(`This content requires a ${LEVEL_NAMES[level] || 'Premium'} membership. Please upgrade to access.`);
         navigate(basePath);

@@ -106,11 +106,7 @@ const MainSiteRoutes = () => (
 
     {/* ========== TESTS ========== */}
     <Route path="/tests/:category" element={<MainLayout><TestListPage /></MainLayout>} />
-    <Route path="/tests/:categoryId/:testId" element={
-      <MainLayout>
-        <ProtectedRoute><TestPage /></ProtectedRoute>
-      </MainLayout>
-    } />
+    <Route path="/tests/:categoryId/:testId" element={<MainLayout><TestPage /></MainLayout>} />
 
     {/* ========== TOEFL ========== */}
     <Route path="/toefl/reading" element={<MainLayout><ToeflReading /></MainLayout>} />
