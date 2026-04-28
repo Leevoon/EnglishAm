@@ -24,12 +24,6 @@ const Membership = sequelize.define('Membership', {
     type: DataTypes.TINYINT(1),
     allowNull: true,
     defaultValue: 0
-  },
-  level: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 0,
-    comment: '0=free, 1=silver, 2=gold'
   }
 }, {
   tableName: 'membership',
