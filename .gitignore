@@ -44,3 +44,7 @@ db/
 tmp/
 temp/
 *.tmp
+
+old/
+new/
+
