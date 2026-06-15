@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
-
-const AUTH = 'Basic ' + btoa('admin:admin');
+import { apiFetch } from './api';
 
 function inputForField(name, meta, value, onChange) {
   const t = meta.type;
@@ -69,9 +68,8 @@ export default function RowForm({ table, schema, row, lockedFields, onSaved, onC
 
     const url = isNew ? `/api/${table}/` : `/api/${table}/${row.id}/`;
     try {
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method: isNew ? 'POST' : 'PATCH',
-        headers: { Authorization: AUTH, 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => null);

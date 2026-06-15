@@ -1,0 +1,54 @@
+# Production-shaped compose stack: db + backend + frontend behind nginx.
+# Bring up: `docker compose up -d --build`
+# All secrets/config come from .env at repo root (see .env.example).
+
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-rootpw}
+      MYSQL_DATABASE: ${DB_NAME:-english}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # If english_18_01_19_backup.sql sits next to this file on first boot,
+      # MySQL auto-loads it. Remove or rename after first run for a fresh DB.
+      - ./english_18_01_19_backup.sql:/docker-entrypoint-initdb.d/01_legacy.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Override defaults so backend uses the in-network db service.
+      DB_HOST: db
+      DB_PORT: 3306
+    depends_on:
+      db:
+        condition: service_healthy
+    # Apply auth/admin migrations on every boot (idempotent), then exec gunicorn.
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             gunicorn EnglishAm.wsgi:application
+               --bind 0.0.0.0:8000
+               --workers 3
+               --access-logfile -
+               --error-logfile -"
+    expose:
+      - "8000"
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+
+volumes:
+  mysql_data:

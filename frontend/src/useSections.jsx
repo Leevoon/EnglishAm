@@ -1,16 +1,15 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import { apiJson } from './api';
 
-const AUTH = 'Basic ' + btoa('admin:admin');
 const SectionsContext = createContext({ sections: null, loading: true, error: null });
 
 export function SectionsProvider({ children }) {
   const [state, setState] = useState({ sections: null, loading: true, error: null });
 
   useEffect(() => {
-    fetch('/api/sections/', { headers: { Authorization: AUTH, Accept: 'application/json' } })
-      .then((r) => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
+    apiJson('/api/sections/')
       .then((d) => setState({ sections: d.sections, loading: false, error: null }))
-      .catch((e) => setState({ sections: null, loading: false, error: String(e) }));
+      .catch((e) => setState({ sections: null, loading: false, error: e.message }));
   }, []);
 
   return <SectionsContext.Provider value={state}>{children}</SectionsContext.Provider>;

@@ -1,55 +1,118 @@
 # EnglishAm
 
-## Run
+Admin panel for the legacy English-tutoring site. Django REST backend (auto-CRUD over 183 imported MySQL tables) + React/Vite frontend (composite editor with relation drill-down).
 
-### 1. Start MySQL (Docker)
+## Quick start (dev)
 
-```bash
-docker start eng-mysql
-```
-
-First time only — create the container and load the dump:
+You need: Docker Desktop, Python 3.11+, Node 20+.
 
 ```bash
-docker run -d --name eng-mysql \
-  -e MYSQL_ROOT_PASSWORD=rootpw \
-  -e MYSQL_DATABASE=english \
-  -p 3307:3306 mysql:8.0
+# 1. Configuration
+cp .env.example .env             # tweak if you want; defaults work for local dev
 
-# wait ~15s for MySQL to initialize, then:
+# 2. Database (MySQL in Docker)
+docker compose -f docker-compose.dev.yml up -d
+# First boot: load the legacy dump (file isn't tracked; place it at the repo root)
 docker exec -i eng-mysql sh -c 'exec mysql -uroot -prootpw english' < english_18_01_19_backup.sql
-```
 
-### 2. Start Django backend (port 8000)
-
-```bash
-./venv/bin/python manage.py runserver 8000
-```
-
-First time only:
-
-```bash
-./venv/bin/pip install -r requirements.txt   # or: pymysql cryptography djangorestframework
+# 3. Backend
+python -m venv venv
+./venv/bin/pip install -r requirements.txt
 ./venv/bin/python manage.py migrate
-./venv/bin/python manage.py createsuperuser   # admin / admin
+DJANGO_SUPERUSER_USERNAME=admin DJANGO_SUPERUSER_EMAIL=admin@example.com \
+  DJANGO_SUPERUSER_PASSWORD=admin \
+  ./venv/bin/python manage.py createsuperuser --noinput
+./venv/bin/python manage.py runserver 8000
+
+# 4. Frontend (separate terminal)
+cd frontend && npm install && npm run dev
 ```
 
-### 3. Start React frontend (port 5173)
+Open:
+- **React admin** — http://localhost:5173/ (login: admin / admin)
+- **Django admin** — http://localhost:8000/admin/
+- **DRF browsable API** — http://localhost:8000/api/
+
+## Production deploy (Docker)
+
+Builds gunicorn-served Django + nginx-served React bundle, with MySQL as a service.
 
 ```bash
-cd frontend && npm run dev
+# 1. Secrets
+cp .env.example .env
+# REQUIRED edits in .env:
+#   DJANGO_SECRET_KEY=<run: python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'>
+#   DJANGO_DEBUG=0
+#   DJANGO_ALLOWED_HOSTS=your.domain.com
+#   DJANGO_CSRF_TRUSTED_ORIGINS=https://your.domain.com
+#   DJANGO_SECURE_PROXY_SSL_HEADER=1   # when behind nginx/caddy with TLS
+#   DB_PASSWORD=<something strong>
+#   SENTRY_DSN=https://...             # optional but recommended
+
+# 2. Bring up the stack (db + backend + frontend)
+docker compose up -d --build
+
+# 3. Bootstrap an admin user (one-time)
+docker compose exec backend \
+  python manage.py createsuperuser
 ```
 
-First time only:
+The frontend is on `:8080` by default (`FRONTEND_PORT` in `.env`). Put your TLS terminator (nginx, Caddy, Cloudflare) in front of it.
+
+### Backups
 
 ```bash
-cd frontend && npm install
+./scripts/backup-mysql.sh /srv/backups
 ```
 
-## Open
+Pairs with a cron entry:
+```
+15 3 * * * /srv/EnglishAm/scripts/backup-mysql.sh /srv/backups && \
+           find /srv/backups -name 'eng-*.sql.gz' -mtime +30 -delete
+```
 
-- React admin: http://localhost:5173/
-- Django admin: http://localhost:8000/admin/
-- DRF API root: http://localhost:8000/api/
+### Restore
 
-Login: `admin` / `admin`
+```bash
+gunzip < /srv/backups/eng-YYYYMMDDTHHMMSSZ.sql.gz | \
+  docker compose exec -T db sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"'
+```
+
+## Architecture
+
+```
+┌─────────────────┐   /api/*       ┌──────────────────┐   MySQL  ┌─────────┐
+│ frontend (nginx)│ ──────────────▶│ backend (gunicorn)│─────────▶│  db     │
+│  React SPA      │                │  Django + DRF     │          │ mysql:8 │
+└─────────────────┘                └──────────────────┘          └─────────┘
+        ▲                                   ▲
+        │ TLS (your terminator)             │
+        └───────────────────────────────────┘
+```
+
+- **Auth** is session-based (HttpOnly cookies, CSRF via `X-CSRFToken` header). No tokens in localStorage; no `Authorization: Basic` from the SPA.
+- **Sensitive columns** (`password`, `auth_key`, anything matching `(^|_)(password|passwd|pwd|secret|token|api_key)(_|$)`) are stripped at the serializer layer — never serialized, never filterable, never orderable.
+- **Schema introspection**: 183 viewsets, serializers, and filtersets are generated dynamically at import. MySQL column defaults are read from `information_schema` once and fed into the serializers so legacy NOT-NULL columns don't force every POST to specify them.
+- **`/api/sections/`** returns the menu structure derived from `settings.menu_control` + table prefix scanning — nothing about the test sections is hardcoded.
+- **`/api/relations/<table>/`** powers the composite editor: every edit page shows the row's own fields plus a tab per child table, recursively.
+
+## Files of interest
+
+- `EnglishAm/settings.py` — env-driven, production-hardened (HTTPS redirect, secure cookies, etc. when `DJANGO_DEBUG=0`)
+- `english/api.py` — the auto-CRUD factory (sensitive-field stripping, DB default introspection, lookups, search, ordering)
+- `english/auth_views.py` — `/api/auth/{login,logout,whoami}/`
+- `english/menu_views.py` — `/api/sections/`, `/api/schema/<table>/`, `/api/relations/<table>/`
+- `english/admin.py` — Django admin registration with sensitive-field exclusion
+- `frontend/src/api.js` — single fetch wrapper (session cookies, CSRF, 401 broadcast)
+- `frontend/src/EditPage.jsx` — composite editor with relation tabs
+- `Dockerfile`, `frontend/Dockerfile`, `frontend/nginx.conf` — production containers
+- `docker-compose.yml` — prod stack
+- `docker-compose.dev.yml` — dev (DB only, app runs native for hot-reload)
+- `.github/workflows/ci.yml` — system check + Django check + frontend build
+- `scripts/backup-mysql.sh` — cron-friendly dumper
+
+## Login
+
+Default credentials are `admin / admin`. **Change them on first login** — `docker compose exec backend python manage.py changepassword admin`.
+
+CSRF: the React app reads the `csrftoken` cookie (set by Django on first `/api/auth/whoami/` call) and echoes it as `X-CSRFToken` on every write — handled by `src/api.js`. No manual plumbing.

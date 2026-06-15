@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import RowFormModal from './RowFormModal';
+import { apiFetch, apiJson } from './api';
 import { isAudioField, isImageField, mediaUrl } from './media';
-
-const AUTH = 'Basic ' + btoa('admin:admin');
 
 function toRelative(url) {
   if (!url) return null;
@@ -57,10 +56,7 @@ export default function Page({ title, table, extraQuery }) {
   useEffect(() => {
     setSchema(null);
     if (!table) return;
-    fetch(`/api/schema/${table}/`, {
-      headers: { Authorization: AUTH, Accept: 'application/json' },
-    })
-      .then((r) => r.ok ? r.json() : null)
+    apiJson(`/api/schema/${table}/`)
       .then((d) => setSchema(d?.fields || null))
       .catch(() => setSchema(null));
   }, [table]);
@@ -70,24 +66,17 @@ export default function Page({ title, table, extraQuery }) {
   useEffect(() => {
     if (!url) return;
     setLoading(true);
-    fetch(url, { headers: { Authorization: AUTH, Accept: 'application/json' } })
-      .then((r) => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
+    apiJson(url)
       .then((d) => { setData(d); setError(null); })
-      .catch((e) => { setError(String(e)); setData(null); })
+      .catch((e) => { setError(e.message); setData(null); })
       .finally(() => setLoading(false));
   }, [url]);
 
   async function handleDelete(row) {
     if (!confirm(`Delete row #${row.id} from ${table}?`)) return;
-    const res = await fetch(`/api/${table}/${row.id}/`, {
-      method: 'DELETE',
-      headers: { Authorization: AUTH, Accept: 'application/json' },
-    });
-    if (res.ok) {
-      reload();
-    } else {
-      alert(`Delete failed: HTTP ${res.status}`);
-    }
+    const res = await apiFetch(`/api/${table}/${row.id}/`, { method: 'DELETE' });
+    if (res.ok) reload();
+    else alert(`Delete failed: HTTP ${res.status}`);
   }
 
   const rows = data?.results ?? [];

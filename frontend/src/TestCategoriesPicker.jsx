@@ -1,15 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-
-const AUTH = 'Basic ' + btoa('admin:admin');
+import { apiJson } from './api';
 
 const fetchAll = async (url) => {
   const all = [];
   let next = url;
   while (next) {
-    const res = await fetch(next, { headers: { Authorization: AUTH, Accept: 'application/json' } });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
+    const data = await apiJson(next);
     all.push(...(data.results ?? []));
     next = data.next ? new URL(data.next).pathname + new URL(data.next).search : null;
   }

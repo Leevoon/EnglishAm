@@ -1,0 +1,8 @@
+node_modules/
+dist/
+dist-ssr/
+.vite/
+.eslintcache
+.DS_Store
+.git/
+README.md

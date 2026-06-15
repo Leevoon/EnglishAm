@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import ChildList from './ChildList';
 import RowForm from './RowForm';
-
-const AUTH = 'Basic ' + btoa('admin:admin');
+import { apiJson } from './api';
 
 function humanize(s) {
   return s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -28,17 +27,17 @@ export default function EditPage() {
     setRow(isNew ? {} : null);
     setError(null);
 
-    const headers = { Authorization: AUTH, Accept: 'application/json' };
-    fetch(`/api/schema/${table}/`, { headers })
-      .then((r) => r.ok ? r.json() : null).then((d) => setSchema(d?.fields || null));
-    fetch(`/api/relations/${table}/`, { headers })
-      .then((r) => r.ok ? r.json() : null).then((d) => setRelations(d?.children || []));
+    apiJson(`/api/schema/${table}/`)
+      .then((d) => setSchema(d?.fields || null))
+      .catch(() => setSchema(null));
+    apiJson(`/api/relations/${table}/`)
+      .then((d) => setRelations(d?.children || []))
+      .catch(() => setRelations([]));
 
     if (!isNew) {
-      fetch(`/api/${table}/${id}/`, { headers })
-        .then((r) => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
+      apiJson(`/api/${table}/${id}/`)
         .then(setRow)
-        .catch((e) => setError(String(e)));
+        .catch((e) => setError(e.message));
     }
   }, [table, id, isNew]);
 

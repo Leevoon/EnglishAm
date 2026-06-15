@@ -1,0 +1,19 @@
+# Dev-only overlay: only run MySQL in a container; backend + Vite stay native
+# so hot-reload, real tracebacks, and IDE debuggers work normally.
+# Bring up: `docker compose -f docker-compose.dev.yml up -d`
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: eng-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-rootpw}
+      MYSQL_DATABASE: ${DB_NAME:-english}
+    ports:
+      - "${DB_HOST_PORT:-3307}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:

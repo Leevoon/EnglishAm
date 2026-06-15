@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import RowFormModal from './RowFormModal';
+import { apiFetch, apiJson } from './api';
 import { isAudioField, isImageField, mediaUrl } from './media';
-
-const AUTH = 'Basic ' + btoa('admin:admin');
 
 function renderCell(table, name, v) {
   if (v === null || v === undefined || v === '') return <span className="muted">—</span>;
@@ -33,24 +32,20 @@ export default function ChildList({ parentTable, parentId, childTable, fkField }
   const reload = useCallback(() => setReloadTick((t) => t + 1), []);
 
   useEffect(() => {
-    fetch(`/api/schema/${childTable}/`, { headers: { Authorization: AUTH, Accept: 'application/json' } })
-      .then((r) => r.ok ? r.json() : null)
+    apiJson(`/api/schema/${childTable}/`)
       .then((d) => setSchema(d?.fields || null))
       .catch(() => setSchema(null));
   }, [childTable]);
 
   useEffect(() => {
-    fetch(url, { headers: { Authorization: AUTH, Accept: 'application/json' } })
-      .then((r) => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
+    apiJson(url)
       .then(setData)
-      .catch((e) => setError(String(e)));
+      .catch((e) => setError(e.message));
   }, [url, reloadTick]);
 
   async function handleDelete(row) {
     if (!confirm(`Delete row #${row.id} from ${childTable}?`)) return;
-    const res = await fetch(`/api/${childTable}/${row.id}/`, {
-      method: 'DELETE', headers: { Authorization: AUTH },
-    });
+    const res = await apiFetch(`/api/${childTable}/${row.id}/`, { method: 'DELETE' });
     if (res.ok) reload();
     else alert(`Delete failed: HTTP ${res.status}`);
   }
