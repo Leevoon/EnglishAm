@@ -1,97 +1,55 @@
-# English.am - Modern Web Application
+# EnglishAm
 
-A modern English learning platform built with React and Node.js.
+## Run
 
-## Project Structure
+### 1. Start MySQL (Docker)
 
-```
-english-am-new/
-├── react-frontend/    # React.js frontend application
-├── node-backend/      # Node.js/Express API server
-└── README.md
+```bash
+docker start eng-mysql
 ```
 
-## Getting Started
+First time only — create the container and load the dump:
 
-### Prerequisites
+```bash
+docker run -d --name eng-mysql \
+  -e MYSQL_ROOT_PASSWORD=rootpw \
+  -e MYSQL_DATABASE=english \
+  -p 3307:3306 mysql:8.0
 
-- Node.js (v16 or higher)
-- npm or yarn
-- MySQL database
+# wait ~15s for MySQL to initialize, then:
+docker exec -i eng-mysql sh -c 'exec mysql -uroot -prootpw english' < english_18_01_19_backup.sql
+```
 
-### Installation
+### 2. Start Django backend (port 8000)
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd english-am-new
-   ```
+```bash
+./venv/bin/python manage.py runserver 8000
+```
 
-2. **Set up the backend**
-   ```bash
-   cd node-backend
-   npm install
-   
-   # Configure database connection in config/database.js
-   npm start
-   ```
-   The API server will run on http://localhost:3001
+First time only:
 
-3. **Set up the frontend**
-   ```bash
-   cd react-frontend
-   npm install
-   npm start
-   ```
-   The app will open at http://localhost:3000
+```bash
+./venv/bin/pip install -r requirements.txt   # or: pymysql cryptography djangorestframework
+./venv/bin/python manage.py migrate
+./venv/bin/python manage.py createsuperuser   # admin / admin
+```
 
-## Features
+### 3. Start React frontend (port 5173)
 
-### Frontend (React)
-- Modern responsive design
-- TOEFL & IELTS test preparation
-- Interactive English tests (Audio, Synonyms, Antonyms, etc.)
-- User authentication
-- Membership plans
-- Multi-language support
+```bash
+cd frontend && npm run dev
+```
 
-### Backend (Node.js)
-- RESTful API
-- User authentication with JWT
-- Database integration with MySQL
-- Test management endpoints
-- Content management
+First time only:
 
-## Tech Stack
+```bash
+cd frontend && npm install
+```
 
-- **Frontend**: React.js, React Router, Axios, CSS3
-- **Backend**: Node.js, Express.js, MySQL2, JWT
-- **Database**: MySQL
+## Open
 
-## Available Routes
+- React admin: http://localhost:5173/
+- Django admin: http://localhost:8000/admin/
+- DRF API root: http://localhost:8000/api/
 
-### Public Pages
-- `/` - Home page
-- `/about` - About us
-- `/contact` - Contact page
-- `/news` - News listing
-- `/gallery` - Photo gallery
-- `/lessons` - Lessons
-
-### Tests
-- `/tests/:category` - Test listings (audio, synonyms, antonyms, etc.)
-- `/toefl/*` - TOEFL preparation
-- `/ielts/*` - IELTS preparation
-- `/training/*` - Training exercises
-
-### Authentication
-- `/login` - User login
-- `/register` - User registration
-
-## Testing
-
-This is a test line for development purposes.
-
-## License
-
-This project is proprietary software for English.am.
+Login: `admin` / `admin`
