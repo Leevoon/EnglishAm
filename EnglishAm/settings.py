@@ -50,10 +50,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'rest_framework',
     'django_filters',
     'english',
 ]
+
+
+# === CORS (only active when DJANGO_CORS_ALLOWED_ORIGINS is set) ===
+# Set this when the React frontend lives on a different origin than Django.
+# Same-origin (frontend behind nginx that proxies /api here) leaves this empty.
+CORS_ALLOWED_ORIGINS = env.list('DJANGO_CORS_ALLOWED_ORIGINS', default=[])
+CORS_ALLOW_CREDENTIALS = True  # session cookies need this
 
 
 # === REST framework ===
@@ -77,9 +85,11 @@ REST_FRAMEWORK = {
 
 
 # === Middleware ===
+# CORS middleware must come before CommonMiddleware (django-cors-headers docs).
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # serve collected static in prod
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',

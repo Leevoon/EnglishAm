@@ -4,6 +4,20 @@
 // browser carries `sessionid` and `csrftoken` automatically when we set
 // `credentials: 'include'`. For state-changing requests we read csrftoken
 // from cookie and echo it back as X-CSRFToken — Django's middleware checks it.
+//
+// Backend host: VITE_API_BASE_URL at build time. Empty = same-origin (works
+// in dev through Vite's `/api` proxy, and in compose through nginx's
+// `/api` location block). Set to e.g. `https://api.example.com` when the
+// frontend is served from a different origin than the backend — in that
+// case the backend MUST add the frontend's origin to DJANGO_CORS_ALLOWED_ORIGINS
+// and DJANGO_CSRF_TRUSTED_ORIGINS.
+
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+
+function buildUrl(path) {
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${API_BASE}${path}`;
+}
 
 function getCookie(name) {
   const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
@@ -25,7 +39,12 @@ export async function apiFetch(url, options = {}) {
     if (csrf) headers.set('X-CSRFToken', csrf);
   }
 
-  const res = await fetch(url, { ...options, method, headers, credentials: 'include' });
+  const res = await fetch(buildUrl(url), {
+    ...options,
+    method,
+    headers,
+    credentials: 'include',
+  });
 
   // Surface auth failures globally — the AuthProvider listens for this.
   if (res.status === 401 || res.status === 403) {

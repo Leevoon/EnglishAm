@@ -1,12 +1,16 @@
 // Legacy media URL conventions.
 //
-// Confirmed patterns:
-//   toefl_*  → https://english.am/vendor/img/toefl_reading/<file>   (snake_case kept whole)
-//   ielts_*  → https://english.am/vendor/img/ielts/reading/<file>   (underscore replaced by /)
+// Origin is set via VITE_MEDIA_BASE_URL at build time. Default keeps the
+// legacy CDN host so dev shows real images out of the box.
 //
+// Confirmed patterns:
+//   toefl_*  → <origin>/toefl_reading/<file>   (snake_case kept whole)
+//   ielts_*  → <origin>/ielts/reading/<file>   (underscore replaced by /)
 // Other tables default to snake_case-as-folder.
 
-const ORIGIN = 'https://english.am/vendor/img';
+const ORIGIN = (
+  import.meta.env.VITE_MEDIA_BASE_URL || 'https://english.am/vendor/img'
+).replace(/\/$/, '');
 
 function folderForTable(table) {
   if (table.startsWith('ielts_')) return table.replace(/_/g, '/');

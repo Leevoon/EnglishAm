@@ -59,6 +59,24 @@ docker compose exec backend \
 
 The frontend is on `:8080` by default (`FRONTEND_PORT` in `.env`). Put your TLS terminator (nginx, Caddy, Cloudflare) in front of it.
 
+### Configuring the SPA's backend host
+
+The frontend talks to the API via `VITE_API_BASE_URL`, baked in at **build time**:
+
+| `VITE_API_BASE_URL` | Use when |
+|---|---|
+| _(empty)_ — default | Frontend and backend share an origin (Vite proxy in dev, nginx in compose) |
+| `https://api.example.com` | SPA and API live on different hosts |
+
+When set to a different origin, you must also:
+1. Set `DJANGO_CORS_ALLOWED_ORIGINS=https://your-spa-host` in the backend `.env`
+2. Set `DJANGO_CSRF_TRUSTED_ORIGINS=https://your-spa-host` so CSRF cookie validation accepts requests from the SPA
+3. Serve both over HTTPS — cross-site cookies with `credentials: 'include'` require `SameSite=None; Secure`, which Django sets when `DJANGO_DEBUG=0`
+
+Media host is the same shape — `VITE_MEDIA_BASE_URL` (default `https://english.am/vendor/img`).
+
+Both are picked up automatically by `docker compose build`; the same `.env` row drives them.
+
 ### Backups
 
 ```bash

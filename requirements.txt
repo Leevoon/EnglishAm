@@ -12,6 +12,9 @@ django-environ==0.12.0
 gunicorn==23.0.0
 whitenoise==6.8.2
 
+# Cross-origin requests (only kicks in when DJANGO_CORS_ALLOWED_ORIGINS is set)
+django-cors-headers==4.6.0
+
 # Error tracking (no-op when SENTRY_DSN is empty)
 sentry-sdk==2.20.0
 

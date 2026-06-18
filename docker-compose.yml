@@ -43,7 +43,13 @@ services:
       - "8000"
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        # Empty = same-origin; nginx in this image proxies /api → backend.
+        # Override in .env to point the SPA at a separate backend host.
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+        VITE_MEDIA_BASE_URL: ${VITE_MEDIA_BASE_URL:-https://english.am/vendor/img}
     restart: unless-stopped
     depends_on:
       - backend
