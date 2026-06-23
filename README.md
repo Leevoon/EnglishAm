@@ -6,13 +6,17 @@ Admin panel for the legacy English-tutoring site. Django REST backend (auto-CRUD
 
 You need: Docker Desktop, Python 3.11+, Node 20+.
 
+This is a **hybrid** setup: MySQL runs in Docker, Django and Vite run natively on the host (so you keep hot-reload, real tracebacks, and IDE debuggers). The `.env.example` defaults are pre-configured for this — `DB_HOST=127.0.0.1`, `DB_PORT=3307` (the dev compose maps host `3307` → container `3306`).
+
 ```bash
 # 1. Configuration
-cp .env.example .env             # tweak if you want; defaults work for local dev
+cp .env.example .env             # defaults work as-is for local dev
 
 # 2. Database (MySQL in Docker)
 docker compose -f docker-compose.dev.yml up -d
-# First boot: load the legacy dump (file isn't tracked; place it at the repo root)
+# REQUIRED: load the legacy dump — without it the auto-generated viewsets
+# point at tables that don't exist and every /api/* request returns 500.
+# The dump file isn't tracked in git; place it at the repo root.
 docker exec -i eng-mysql sh -c 'exec mysql -uroot -prootpw english' < english_18_01_19_backup.sql
 
 # 3. Backend
@@ -27,6 +31,8 @@ DJANGO_SUPERUSER_USERNAME=admin DJANGO_SUPERUSER_EMAIL=admin@example.com \
 # 4. Frontend (separate terminal)
 cd frontend && npm install && npm run dev
 ```
+
+> **MySQL password gotcha:** the dev compose initializes the root password from `DB_PASSWORD` on first boot only. If you change `DB_PASSWORD` in `.env` after the volume exists, the live root password is still whatever it was first initialized with. To re-init: `docker compose -f docker-compose.dev.yml down -v` (wipes data, then re-run step 2).
 
 Open:
 - **React admin** — http://localhost:5173/ (login: admin / admin)
